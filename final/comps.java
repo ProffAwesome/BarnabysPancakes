@@ -102,7 +102,8 @@ public class comps extends JPanel implements ActionListener/*, MenuElement*/ {
 		dev.add(new JSeparator());
 		dev.add(update2);
 		loadmap.addActionListener(this);
-		menubar.add(dev);
+		if (!Display.demo)
+			menubar.add(dev);
 		
 		help = new JMenu("Help");
 		howtoplay = new JMenuItem("How To Play");

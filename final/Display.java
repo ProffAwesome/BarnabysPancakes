@@ -14,6 +14,8 @@ import javax.media.jai.*;
 public class Display extends Applet implements MouseListener, MouseMotionListener, KeyListener {
 	private static final long serialVersionUID = 1L;
 	
+	public static boolean demo = false;
+	
 	public static int w, h; //w is the width of the applet, h is the height
 	int x, y;
 	int fps = 32;
@@ -23,12 +25,13 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 	public static boolean runT = true;
 	public static boolean hudon = true, mapon = true, noclip = false;
 	boolean invopen = false;
+	boolean invdrag = false;
+	Weapon invtemp = new Weapon();
 	boolean moveup = false;
 	boolean movedown = false;
 	boolean moveleft = false;
 	boolean moveright = false;
 	boolean run = false;
-	int wepmx, wepmy;
 	static boolean mapChanged = false;
 	public static boolean classicControls = false;
 	double movex, movey;
@@ -93,7 +96,10 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 		PI = Math.PI;
 		movex = 0.0;
 		movey = 0.0;
-		map = readInMap("maps/maptest.map");//"maps/forestmap.map");//maptest.map");
+		if (!demo)
+			map = readInMap("maps/Tutorial.map");//forestmap.map");
+		else
+			map = readInMap("maps/Tutorial.map");
 		this.requestFocus();
 	} //end init()
 	
@@ -106,16 +112,118 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 			pauseGame();
 		e.consume();
 	}
-	public final void mouseClicked(MouseEvent e) { }
+	public final void mouseClicked(MouseEvent e) {
+		if (invopen) {
+			int xstart = w/2-invmain.getWidth(this)/2 + 15;
+			int ystart = (h-58)/2-invmain.getHeight(this)/2 + 46;
+			if (mx >= xstart && mx < xstart+448 && my >= ystart && my < ystart+224) {
+				int invmouse = (mx-xstart)/56 + ((my-ystart)/56)*8;
+				if (invdrag) {
+					if (p.inv[invmouse].wid == -1) {
+						p.inv[invmouse] = invtemp;
+						invtemp = null;
+						invtemp = new Weapon();
+						invdrag = false;
+					}
+					else {
+						Weapon temp = p.inv[invmouse];
+						p.inv[invmouse] = invtemp;
+						invtemp = temp;
+					}
+				}
+				else if (!invdrag && p.inv[invmouse].wid != -1) {
+					invtemp = p.inv[invmouse];
+					p.inv[invmouse] = null;
+					p.inv[invmouse] = new Weapon();
+					invdrag = true;
+				}
+			}
+			else if (mx >= 0 && mx < hudinv.getWidth(this) && my >= h-hudinv.getHeight(this) && my < h) {
+				if (mx >= 7 && mx <= 57 && my >= h-hudinv.getHeight(this)+2 && my <= h-hudinv.getHeight(this)+52) { //if q
+					if (invdrag) {
+						if (p.q.wid <= 0) {
+							p.q = invtemp;
+							invtemp = null;
+							invtemp = new Weapon();
+							invdrag = false;
+						}
+						else {
+							Weapon temp = p.q;
+							p.q = invtemp;
+							invtemp = temp;
+						}
+					}
+					else if (!invdrag && p.q.wid > 0) {
+						invtemp = p.q;
+						p.q = null;
+						p.q = new Weapon(0);
+						invdrag = true;
+					}
+				}
+				else if (mx >= 33 && mx <= 83 && my >= h-hudinv.getHeight(this)+60 && my <= h-hudinv.getHeight(this)+110) { //if l
+					if (invdrag) {
+						if (p.l.wid <= 0) {
+							p.l = invtemp;
+							invtemp = null;
+							invtemp = new Weapon();
+							invdrag = false;
+						}
+						else {
+							Weapon temp = p.l;
+							p.l = invtemp;
+							invtemp = temp;
+						}
+					}
+					else if (!invdrag && p.l.wid > 0) {
+						invtemp = p.l;
+						p.l = null;
+						p.l = new Weapon(0);
+						invdrag = true;
+					}
+				}
+				else if (mx >= 91 && mx <= 141 && my >= h-hudinv.getHeight(this)+86 && my <= h-hudinv.getHeight(this)+136) { //if r
+					if (invdrag) {
+						if (p.r.wid <= 0) {
+							p.r = invtemp;
+							invtemp = null;
+							invtemp = new Weapon();
+							invdrag = false;
+						}
+						else {
+							Weapon temp = p.r;
+							p.r = invtemp;
+							invtemp = temp;
+						}
+					}
+					else if (!invdrag && p.r.wid > 0) {
+						invtemp = p.r;
+						p.r = null;
+						p.r = new Weapon(0);
+						invdrag = true;
+					}
+				}
+			}
+			e.consume();
+			draw();
+		}
+	}
 		//if (e.getClickCount() == 2) { }
 	public final void mousePressed(MouseEvent e) {
 		if (running) {
 			mx = e.getX();
 			my = e.getY();
-			if (e.getButton() == MouseEvent.BUTTON1)
-				invAction(p.l);
-			else if (e.getButton() == MouseEvent.BUTTON3)
-				invAction(p.r);
+			if (e.getButton() == MouseEvent.BUTTON1) {
+				if (p.l.wid == 10)
+					p.l = invAction(p.l);
+				else
+					invAction(p.l);
+			}
+			else if (e.getButton() == MouseEvent.BUTTON3) {
+				if (p.r.wid == 10)
+					p.r = invAction(p.r);
+				else
+					invAction(p.r);
+			}
 			e.consume();
 		}
 		else if (!invopen) {
@@ -125,9 +233,9 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 	}
 	public final void mouseReleased(MouseEvent e) { }
 	public final void mouseMoved(MouseEvent e) {
+		mx = e.getX();
+		my = e.getY();
 		if (running) {
-			mx = e.getX();
-			my = e.getY();	
 			mxd = mx-w/2;
 			myd = my-h/2;
 			if (mxd == 0)
@@ -141,6 +249,8 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 				prot += 2*PI;
 			e.consume();
 		}
+		else if (invopen)
+			draw();
 	}
 	public final void mouseDragged(MouseEvent e) { }
 	
@@ -160,11 +270,19 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 					moveright = true;
 					break;
 				case KeyEvent.VK_Q:
-					invAction(p.q);
+					if (p.q.wid == 10)
+						p.q = invAction(p.q);
+					else
+						invAction(p.q);
 					break;
 				case KeyEvent.VK_E:
-					invopen = true;
-					pauseGame();
+					if (!demo) {
+						invopen = true;
+						pauseGame();
+					}
+					break;
+				case KeyEvent.VK_F:
+					pickupWeap();
 					break;
 				case KeyEvent.VK_SHIFT:
 					run = true;
@@ -174,8 +292,10 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 					break;
 			}
 		}
-		else if (invopen) {
+		else if (invopen && !invdrag) {
 			invopen = false;
+			invtemp = null;
+			invtemp = new Weapon();
 			runT = true;
 			draw();
 		}
@@ -212,26 +332,28 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 		run = false;
 	}
 	
-	public final void invAction(int type) {
-		if (type < 5) { //short-range weapons
-			if (type == 0) { //open-fist melee
+	public final Weapon invAction(Weapon type) {
+		if (type.wid < 5) { //short-range weapons
+			if (type.wid == 0) { //open-fist melee
 				hitNPC(Entity.root, (int)(p.x+31*Math.cos(prot)), (int)(p.y+31*Math.sin(prot)));
-				System.out.println((int)(p.x+31*Math.cos(prot)) + "," + (int)(p.y+31*Math.sin(prot)));
+		//		System.out.println((int)(p.x+31*Math.cos(prot)) + "," + (int)(p.y+31*Math.sin(prot)));
 			}
 			else {
 				int range = 4;
 				hitNPC(Entity.root, (int)(p.x+(range*10+21)*Math.cos(prot)), (int)(p.y+(range*10+21)*Math.sin(prot)));
-				System.out.println((int)(p.x+(range*10+21)*Math.cos(prot)) + "," + (int)(p.y+(range*10+21)*Math.sin(prot)));
+		//		System.out.println((int)(p.x+(range*10+21)*Math.cos(prot)) + "," + (int)(p.y+(range*10+21)*Math.sin(prot)));
 			}
 		}
-		else if (type < 15) {  //long-range weapons
-			if (type == 10 && p.ammo > 0) { //gun
-				addProj(p.x, p.y, p.x-(w/2-mx), p.y-(h/2-my), 7.5);
-			//	p.ammo--;
+		else if (type.wid < 15) {  //long-range weapons
+			if (type.wid == 10 && type.ammo > 0) { //gun
+				addProj(p.x, p.y, p.x-(w/2-mx), p.y-(h/2-my), 15);
+				type.ammo--;
 			}
+			if (type.ammo == 0)
+				System.out.println("No ammo");
 		}
-		else if (type < 20) { //magic
-			if (type == 15/* && p.mana >= 20*/) { //teleportation
+		else if (type.wid < 20) { //magic
+			if (type.wid == 15 && p.mana >= 20) { //teleportation
 				if ((mx-w/2)+p.x > 0 && (mx-w/2)+p.x < mapw*48 && (my-h/2)+p.y > 0 && (my-h/2)+p.y < maph*48) {
 					if (!noclip && map[((my-h/2)+(int)p.y)/48][((mx-w/2)+(int)p.x)/48] < 60 && map[((my-h/2)+(int)p.y)/48][((mx-w/2)+(int)p.x)/48] != -1) {
 						p.x = (mx-w/2) + p.x;
@@ -247,12 +369,28 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 				}
 			}
 		}
-		else if (type > 260) { //items
+		else if (type.wid > 260) { //items
 			;
+		}
+		return type;
+	}
+	
+	public final void pickupWeap() {
+		for (int i = 0; i < Entity.wIndex; i++){
+			try{
+				if (Entity.w[i].wid != -1){
+					int x = (w/2)-(int)(p.x-Entity.w[i].x);
+					int y = (h/2)-(int)(p.y-Entity.w[i].y);
+					if (mx < x+26 && mx > x && my < y+26 && my > y && mx-w/2 < 100 && my-h/2 < 100) {	//Mousing over weapon
+						p.addWeap(Entity.w[i]);
+						Entity.w[i] = new Weapon();
+					}
+				}
+			}catch(Exception x){	System.out.println("Here: " + x);	}
 		}
 	}
 	
-	public final boolean hitNPC(NPC at, int hitx, int hity){
+	public final boolean hitNPC(NPC at, int hitx, int hity) {
 		//try{
 			if (at != null){
 				if ((hitx < at.x3 && hitx > at.x1) && (hity < at.y2 && hity > at.y1)){
@@ -273,7 +411,6 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 	}
 	
 	public static final int[][] readInMap(String fn){
-		//TODO:
 		int[][] area = null;
 		e = new Entity(p);
 		try{
@@ -288,8 +425,8 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 						String[] s = l.split(","); //0=w, 1=h, 2=p.x, 3=p.y, 4=number of entities at end of file
 						mapw = Integer.parseInt(s[0]);
 						maph = Integer.parseInt(s[1]);
-						p.x = (double)Integer.parseInt(s[2])*48 + 30;
-						p.y = (double)Integer.parseInt(s[3])*48 + 30;
+						p.x = (double)Integer.parseInt(s[2])*48 + 24;
+						p.y = (double)Integer.parseInt(s[3])*48 + 24;
 						entitynum = Integer.parseInt(s[4]);
 						area = new int[maph][mapw];	//Generate the array
 						fLine = false;
@@ -310,9 +447,9 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 				} //end else if
 				else if (entitynum > 0) {
 					String[] s = l.split(","); //repeats x,y,type,health,damage,range for each entity
-					int entx = Integer.parseInt(s[0]); //x position
-					int enty = Integer.parseInt(s[1]); //y position
-					int entt = Integer.parseInt(s[2]); //type
+					int entt = Integer.parseInt(s[0]); //type
+					int entx = Integer.parseInt(s[1])*48; //x position
+					int enty = Integer.parseInt(s[2])*48; //y position
 					int entd = Integer.parseInt(s[3]); //difficulty
 					e.addNPC(entt, entx, enty, entd);
 					entitynum--;
@@ -408,14 +545,13 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 		if (miny < 0)
 			miny = 0;
 		
-		int size = 54;
+		int size = 54; // different layers for walls and objects?
 		double xpo = (w/2-p.x) - p.x/(48/(size-48));
 		double ypo = (h/2-p.y) - p.y/(48/(size-48));
-		
 		int destx, desty, destx2, desty2, destx3, desty3;
 		for (int yc = miny; yc <= maxy; yc++) {
 			for (int xc = minx; xc <= maxx; xc++) {
-				if (map[yc][xc] >= 120) {
+				if (map[yc][xc] >= 120 || map[yc][xc] == -1) {
 					destx = (int)Math.round((xc*size) + xpo);
 					desty = (int)Math.round((yc*size) + ypo);
 					if (xc+1 <= maxx && map[yc][xc+1] < 120 && map[yc][xc+1] != -1 && p.x > (xc+1)*48+1) {
@@ -423,10 +559,13 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 						desty2 = desty + size;
 						destx3 = ((xc+1)*48) + (w/2-(int)p.x);
 						desty3 = (yc*48) + (h/2-(int)p.y);
+						boolean drawblack = false;
+						if (map[yc][xc] == -1)
+							drawblack = true;
 						if (destx2-destx3 != 0 && desty2-desty3 != 0) {
 							int[] xco = {destx2, destx2, destx3, destx3};
 							int[] yco = {desty2, desty2-size, desty3, desty3+48};
-							drawImage3D(xco, yco, xc, yc, texdark);
+							drawImage3D(xco, yco, xc, yc, texdark, drawblack);
 						}
 					}
 					if (xc-1 >= minx && map[yc][xc-1] < 120 && map[yc][xc-1] != -1 && p.x < xc*48) {
@@ -434,10 +573,13 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 						desty2 = desty + size;
 						destx3 = (xc*48) + (w/2-(int)p.x);
 						desty3 = (yc*48) + (h/2-(int)p.y);
+						boolean drawblack = false;
+						if (map[yc][xc] == -1)
+							drawblack = true;
 						if (destx2-destx3 != 0 && desty2-desty3 != 0) {
 							int[] xco = {destx2, destx2, destx3, destx3};
 							int[] yco = {desty2, desty2-size, desty3, desty3+48};
-							drawImage3D(xco, yco, xc, yc, tex);
+							drawImage3D(xco, yco, xc, yc, tex, drawblack);
 						}
 					}
 					if (yc+1 <= maxy && map[yc+1][xc] < 120 && map[yc+1][xc] != -1 && p.y > (yc+1)*48+1) {
@@ -445,10 +587,13 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 						desty2 = desty + size;
 						destx3 = (xc*48) + (w/2-(int)p.x);
 						desty3 = ((yc+1)*48) + (h/2-(int)p.y);
+						boolean drawblack = false;
+						if (map[yc][xc] == -1)
+							drawblack = true;
 						if (destx2-destx3 != 0 && desty2-desty3 != 0) {
 							int[] xco = {destx2-size, destx2, destx3+48, destx3};
 							int[] yco = {desty2, desty2, desty3, desty3};
-							drawImage3D(xco, yco, xc, yc, texdark);
+							drawImage3D(xco, yco, xc, yc, texdark, drawblack);
 						}
 					}
 					if (yc-1 >= miny && map[yc-1][xc] < 120 && map[yc-1][xc] != -1 && p.y < yc*48) {
@@ -456,10 +601,13 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 						desty2 = desty;
 						destx3 = (xc*48) + (w/2-(int)p.x);
 						desty3 = (yc*48) + (h/2-(int)p.y);
+						boolean drawblack = false;
+						if (map[yc][xc] == -1)
+							drawblack = true;
 						if (destx2-destx3 != 0 && desty2-desty3 != 0) {
 							int[] xco = {destx2, destx2-size, destx3, destx3+48};
 							int[] yco = {desty2, desty2, desty3, desty3};
-							drawImage3D(xco, yco, xc, yc, tex);
+							drawImage3D(xco, yco, xc, yc, tex, drawblack);
 						}
 					}
 				}
@@ -474,7 +622,16 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 				for (int xc = 0; xc <= mapw-1; xc++) {
 					destx = xc*size;
 					desty = yc*size;
-					if (map[yc][xc] == -1) {
+/* black walls */	if ((map[yc][xc] >= 120 && map[yc][xc] < 180) || map[yc][xc] == -1) {
+						g3d.setColor(Color.black);
+						g3d.fillRect(destx, desty, size, size);
+					}
+					else if (map[yc][xc] >= 180) {
+						int sourcex = (map[yc][xc]%10)*48;
+						int sourcey = (map[yc][xc]/10)*48;
+						g3d.drawImage(tex, destx, desty, destx+size, desty+size, sourcex, sourcey, sourcex+48, sourcey+48, this);
+					}
+/* show walls *//*	if (map[yc][xc] == -1) {
 						g3d.setColor(Color.black);
 						g3d.fillRect(destx, desty, size, size);
 					}
@@ -482,32 +639,35 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 						int sourcex = (map[yc][xc]%10)*48;
 						int sourcey = (map[yc][xc]/10)*48;
 						g3d.drawImage(tex, destx, desty, destx+size, desty+size, sourcex, sourcey, sourcex+48, sourcey+48, this);
-					}
+					}*/
 				}
 			}
 		}
 		g2.drawImage(mapfront, (int)Math.round(xpo), (int)Math.round(ypo), this);
 	}
 	
-	public final void drawImage3D(int[] x, int[] y, int xc, int yc, Image a) { //3D walls with JAI
-		BufferedImage temptex = new BufferedImage(48, 48, BufferedImage.TYPE_INT_ARGB_PRE);
-		temptex.getGraphics().drawImage(a, 0, 0, 48, 48, (map[yc][xc]%10)*48, (map[yc][xc]/10)*48, (map[yc][xc]%10)*48+48, (map[yc][xc]/10)*48+48, this);
-		
-		PerspectiveTransform ptran = PerspectiveTransform.getQuadToQuad(0, 0, 48, 0, 48, 48, 0, 48,	x[0], y[0], x[1], y[1], x[2], y[2], x[3], y[3]);
-		
-		ParameterBlock pb = (new ParameterBlock()).addSource(temptex);
-		try {
-			pb.add(new WarpPerspective(ptran.createInverse()));
-		//	pb.add(Interpolation.getInstance(Interpolation.INTERP_BILINEAR)); //antialiasing - leaves 'open' lines between textures
+	public final void drawImage3D(int[] x, int[] y, int xc, int yc, Image a, boolean drawblack) { //3D walls with JAI
+		if (!drawblack) {
+			BufferedImage temptex = new BufferedImage(48, 48, BufferedImage.TYPE_INT_ARGB_PRE);
+			temptex.getGraphics().drawImage(a, 0, 0, 48, 48, (map[yc][xc]%10)*48, (map[yc][xc]/10)*48, (map[yc][xc]%10)*48+48, (map[yc][xc]/10)*48+48, this);
+			
+			PerspectiveTransform ptran = PerspectiveTransform.getQuadToQuad(0, 0, 48, 0, 48, 48, 0, 48,	x[0], y[0], x[1], y[1], x[2], y[2], x[3], y[3]);
+			
+			ParameterBlock pb = (new ParameterBlock()).addSource(temptex);
+			try {
+				pb.add(new WarpPerspective(ptran.createInverse()));
+			//	pb.add(Interpolation.getInstance(Interpolation.INTERP_BILINEAR)); //antialiasing - leaves 'open' lines between textures
+			}
+			catch (Exception e) { e.printStackTrace(); }
+			
+			RenderedOp renOp = JAI.create("warp", pb);
+			
+			((Graphics2D)dbImage.getGraphics()).drawRenderedImage(renOp, new AffineTransform());
 		}
-		catch (Exception e) { e.printStackTrace(); }
-		
-		RenderedOp renOp = JAI.create("warp", pb);
-		
-		((Graphics2D)dbImage.getGraphics()).drawRenderedImage(renOp, new AffineTransform());
-		
-	//	g2.setColor(Color.black);
-	//	g2d.drawPolygon(x, y, 4);
+		else {
+			g2.setColor(Color.black);
+			((Graphics2D)dbImage.getGraphics()).fillPolygon(x, y, 4);
+		}
 	}
 	
 	public final void drawPlayer(Graphics g2) {
@@ -521,15 +681,19 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 	
 	public final void movePlayer() {
 		if (running) {
-			double speed;
-			if (run && (moveup || movedown) && (moveleft || moveright))
+			double speed = 5.1666;
+		/*	if (run && (moveup || movedown) && (moveleft || moveright))
 				speed = 4.6598337;
 			else if (run)
 				speed = 6.59;
 			else if (!run && (moveup || movedown) && (moveleft || moveright))
 				speed = 2.9839906;
 			else
-				speed = 4.22;
+				speed = 4.22;*/
+			if (!((moveup || movedown) && (moveleft || moveright)))
+				speed = Math.sqrt(speed*speed*2);
+			if (run)
+				speed += 2.33*speed/5;
 			
 			if (classicControls) {
 				if (moveup)
@@ -754,11 +918,27 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 				g2.fillRect(33, h-23, p.mana/2, 14);
 			}
 			g2.drawImage(hudinv, 0, h-hudinv.getHeight(this), this);
+			g2.setColor(Color.black);
+			if (p.q.wid != -1) {
+				g2.drawImage(p.q.modelL, 7, h-hudinv.getHeight(this)+2, this);
+				if (p.q.wid == 10) //if it has ammo
+					g2.drawString(p.q.ammo + "", 10, h-hudinv.getHeight(this)+15);
+			}
+			if (p.l.wid != -1) {
+				g2.drawImage(p.l.modelL, 33, h-hudinv.getHeight(this)+60, this);
+				if (p.l.wid == 10) //if it has ammo
+					g2.drawString(p.l.ammo + "", 36, h-hudinv.getHeight(this)+73);
+			}
+			if (p.r.wid != -1) {
+				g2.drawImage(p.r.modelL, 91, h-hudinv.getHeight(this)+86, this);
+				if (p.r.wid == 10) //if it has ammo
+					g2.drawString(p.r.ammo + "", 94, h-hudinv.getHeight(this)+99);
+			}
 		}
-		wepDesc(g2);
-		if (invopen) {
+		if (invopen)
 			drawInv(g2);
-		}
+		if (!demo)
+			wepDesc(g2);
 		if (!running && !invopen) {
 			g2.drawImage(dark, 0, 0, w, h, 0, 0, w, h, this);
 			g2.drawImage(paused, w/2-paused.getWidth(this)/2, h/2-paused.getHeight(this)/2, this);
@@ -810,25 +990,49 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 	}
 	
 	private void wepDesc(Graphics g2){
-		for (int i = 0; i < Entity.wIndex; i++){
-			try{
-				if (Entity.w[i] != null){
-					int x = (w/2)-(int)(p.x-Entity.w[i].x);
-					int y = (h/2)-(int)(p.y-Entity.w[i].y);
-					if (mx < x+26 && mx > x && my < y+26 && my > y)	//Mousing over weapon
-						drawWepGui(g2, Entity.w[i]);
-				}else
-					System.out.println("null");
-			}catch(Exception x){	System.out.println("Here: " + x);	}
+		if (!invopen) {
+			for (int i = 0; i < Entity.wIndex; i++){
+				try{
+					if (Entity.w[i].wid != -1){
+						int x = (w/2)-(int)(p.x-Entity.w[i].x);
+						int y = (h/2)-(int)(p.y-Entity.w[i].y);
+						if (mx < x+26 && mx > x && my < y+26 && my > y)	//Mousing over weapon
+							drawWepGui(g2, Entity.w[i]);
+					}
+				}catch(Exception x){	System.out.println("Here: " + x);	}
+			}
+		}
+		else {
+			int xstart = w/2-invmain.getWidth(this)/2 + 15;
+			int ystart = (h-58)/2-invmain.getHeight(this)/2 + 46;
+			if (mx >= xstart && mx < xstart+448 && my >= ystart && my < ystart+224) {
+				int invmouse = (mx-xstart)/56 + ((my-ystart)/56)*8;
+				if (p.inv[invmouse].wid != -1)
+					drawWepGui(g2, p.inv[invmouse]);
+			}
+			else if (mx >= 0 && mx < hudinv.getWidth(this) && my >= h-hudinv.getHeight(this) && my < h) {
+				if (mx >= 7 && mx <= 57 && my >= h-hudinv.getHeight(this)+2 && my <= h-hudinv.getHeight(this)+52) { //if q
+					if (p.q.wid > -1)
+						drawWepGui(g2, p.q);
+				}
+				else if (mx >= 33 && mx <= 83 && my >= h-hudinv.getHeight(this)+60 && my <= h-hudinv.getHeight(this)+110) { //if l
+					if (p.l.wid > -1)
+						drawWepGui(g2, p.l);
+				}
+				else if (mx >= 91 && mx <= 141 && my >= h-hudinv.getHeight(this)+86 && my <= h-hudinv.getHeight(this)+136) { //if r
+					if (p.r.wid > -1)
+						drawWepGui(g2, p.r);
+				}
+			}
 		}
 	}
 	
-	public final void drawWepGui(Graphics g, Weapon w2) { //TODO: do this for NPCs too?
+	public final void drawWepGui(Graphics g, Weapon w2) {
 		int x = w-weapdisp.getWidth(this)+5;
 		int y = -5;
 		g.drawImage(weapdisp, x, y, this);
 		g.setColor(Color.black);
-		g.drawImage(w2.modellrg, x+198, y+54, this);
+		g.drawImage(w2.modelL, x+198, y+54, this);
 		g.drawString("Name  " + w2.name, x+17, y+67);
 		g.drawString("Name:", x+18, y+67); //bolds "Name"
 		
@@ -849,8 +1053,25 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 	public final void drawInv(Graphics g2) {
 		int xstart = w/2-invmain.getWidth(this)/2;
 		int ystart = (h-58)/2-invmain.getHeight(this)/2;
-		g2.drawImage(invmain, xstart, ystart, this); //TODO: add input/changing things
-		//draw items and such
+		int xdraw = 18, ydraw = 49;
+		g2.drawImage(invmain, xstart, ystart, this);
+		for (int i = 0; i < p.inv.length; i++) {
+			xdraw = 18;
+			ydraw = 49;
+			if (p.inv[i].wid != -1) {
+				xdraw += (i%8)*56;
+				ydraw += (i/8)*56;
+				g2.drawImage(p.inv[i].modelL, xstart+xdraw, ystart+ydraw, this);
+				if (p.inv[i].wid == 10) //if it has ammo
+					g2.drawString(p.inv[i].ammo + "", xstart+xdraw+3, ystart+ydraw+13);
+			//	System.out.println(i + " " + p.inv[i].wid);
+			}
+		}
+		if (invdrag) {
+			g2.drawImage(invtemp.modelL, mx-25, my-25, this);
+			if (invtemp.wid == 10) //if it has ammo
+				g2.drawString(invtemp.ammo + "", mx-22, my-12);
+		}
 	}	
 	
 	public final void draw() {

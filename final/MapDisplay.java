@@ -96,6 +96,7 @@ public class MapDisplay extends Applet implements MouseListener, MouseMotionList
 				if (delete)
 					tile = -1;
 				map[(my-py)/(48/zoom)][(mx-px)/(48/zoom)] = tile;
+				System.out.println((mx-px)/(48/zoom) + "x y" + (my-py)/(48/zoom));
 			//	System.out.println((((my-py)/48)/zoom) + " " + (((mx-px)/48)/zoom));
 			}
 			else if (e.getButton() == MouseEvent.BUTTON3) {

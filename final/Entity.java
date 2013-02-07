@@ -20,6 +20,8 @@ public class Entity{
 		root = null;
 		nNpc = -1;
 		w = new Weapon[20];
+		for (int i = 0; i < w.length; i++)
+			w[i] = new Weapon();
 	}
 	
 	public double getDist(NPC from){
@@ -58,8 +60,10 @@ public class Entity{
 					angle += 2*Math.PI;
 				double vy = at.speed*(Math.sin(angle));
 				double vx = at.speed*(Math.cos(angle));
-				at.x += vx;
-				at.y += vy;
+				if (!((npcBlocked(at, at.x1, at.y1)||npcBlocked(at, at.x2, at.y2)||npcBlocked(at, at.x3, at.y3)||npcBlocked(at, at.x4, at.y4)) || (tilesBlocked(at.x1,at.y1)||tilesBlocked(at.x2, at.y2)||tilesBlocked(at.x3, at.y3)||tilesBlocked(at.x4, at.y4)))){
+					at.x += vx;
+					at.y += vy;
+				}
 				collideTile(at, vx, vy);
 				npcCollision(at, vx, vy);
 			}
@@ -82,7 +86,7 @@ public class Entity{
 				resetArray(n, at.next, i+1);
 		}
 	}
-	
+
 	public static boolean inNpc(NPC rec, double x, double y){
 		if ((x >= rec.x1 && x < rec.x4) && (y >= rec.y1 && y <= rec.y4)){	//Top left corner is inside other npc
 			return true;
@@ -109,8 +113,6 @@ public class Entity{
 	public void npcCollision(NPC at, double vx, double vy){
 		try{
 			if (npcBlocked(at, at.x1, at.y1)||npcBlocked(at, at.x2, at.y2)||npcBlocked(at, at.x3, at.y3)||npcBlocked(at, at.x4, at.y4)){
-				at.x -= vx;	
-				at.y -= vy;
 				int k = 0;
 				if (vx < 0){
 					//If one of their left side corners are inside an npc
@@ -183,7 +185,6 @@ public class Entity{
 						}
 					}
 				}
-				
 			}
 		}catch(Exception e){	e.printStackTrace();	}
 		
@@ -195,20 +196,17 @@ public class Entity{
 			at.y1 = (int)at.y;
 			
 			at.x2 = at.x1;				//bottom left
-			at.y2 = at.y1 + 30;
+			at.y2 = at.y1 + at.height;
 			
-			at.x3 = at.x1 + 30;			//top right
+			at.x3 = at.x1 + at.width;			//top right
 			at.y3 = at.y1;
 			
-			at.x4 = at.x1 + 30;			//bottom right
-			at.y4 = at.y1 + 30;
+			at.x4 = at.x1 + at.width;			//bottom right
+			at.y4 = at.y1 + at.height;
 			//The tile they're attempting to move to is blocked
 			//if (Display.map[(int)(at.y1/48)][(int)(at.x1/48)] >= 40 || Display.map[(int)(at.y2/48)][(int)(at.x2/48)] >= 40){
 			//If any corner of the npc is on a blocked tile
 			if (tilesBlocked(at.x1,at.y1)||tilesBlocked(at.x2, at.y2)||tilesBlocked(at.x3, at.y3)||tilesBlocked(at.x4, at.y4)){
-				//Return them back to the spot they were previously at
-				at.x -= vx;	
-				at.y -= vy;
 				//For some reason, the npcs will move slightly left/right inside blocked tiles, this stops that.
 				try{
 					//If they're moving left
@@ -279,8 +277,8 @@ public class Entity{
 	}
 	
 	public static boolean tilesBlocked(double x, double y){
-		if ((int)(y/48) < Display.maph-1 && (int)(x/48) < Display.mapw-1){
-			if (Display.map[(int)(y/48)][(int)(x/48)] >= 60)
+		if ((int)(y/48) < Display.maph || (int)(x/48) < Display.mapw){
+			if (Display.map[(int)(y/48)][(int)(x/48)] >= 40 || Display.map[(int)(y/48)][(int)(x/48)] == -1)
 				return true;
 			return false;
 		}else
@@ -298,11 +296,11 @@ public class Entity{
 			Image img;
 			if (move)
 				moveNormal(at);
-			else{
+			else {
 				try {
 					img = ImageIO.read(new File("npc/" + at.type + "/model.png"));
 					at.width = img.getWidth(m);
-					at.height = img.getWidth(m);
+					at.height = img.getHeight(m);
 					g.drawImage(img, at.dX, at.dY, at.dX+30, at.dY+30, 0, 0, 30, 30, m);
 				} catch (IOException e) {	System.out.println("Loading NPC model failed... :(" + "\n" + e);	}
 			}
@@ -317,7 +315,7 @@ public class Entity{
 	
 	public void drawWeapons(Display m, Graphics g){
 		for (int i = 0; i < wIndex; i++){
-			if (w[i] != null){
+			if (w[i].wid != -1){
 				try{
 					int x = (m.w/2)-(int)(p.x-w[i].x);
 					int y = (m.h/2)-(int)(p.y-w[i].y);

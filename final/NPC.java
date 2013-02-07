@@ -31,13 +31,13 @@ public class NPC {
 		this.y1 = (int)this.y;
 		
 		this.x2 = x1;				//bottom left
-		this.y2 = y1 + 30;
+		this.y2 = y1 + this.height;
 		
-		this.x3 = x1 + 30;			//top right
+		this.x3 = x1 + this.width;			//top right
 		this.y3 = y1;
 		
-		this.x4 = x1 + 30;			//bottom right
-		this.y4 = y1 + 30;
+		this.x4 = x1 + this.width;			//bottom right
+		this.y4 = y1 + this.height;
 	}
 	
 	//TODO: Read this information from a binary file
@@ -49,12 +49,12 @@ public class NPC {
 				{
 					//int nDrops = ((int)raf.length() - recLen)/8;
 					//drops = new int[nDrops][2];
-					this.health = 20 + 5*diff;
+					this.health = 25 + 5*diff;
 					this.maxhp = this.health;
 					this.rate = (float) 1.4;
-					this.damage = 5+diff;
+					this.damage = 25+diff;
 					this.range = 1;
-					this.speed = 2;
+					this.speed = 3;
 					break;
 				}
 			}
@@ -100,11 +100,13 @@ public class NPC {
 	}
 	
 	public void killNpc(){
-		try {
-		//	RandomAccessFile raf = new RandomAccessFile("items/weps.bin", "rw");
-			RandomAccessFile raf = new RandomAccessFile("npc/" + this.type + "/weps.bin", "rw");
-			Entity.w[Entity.wIndex] = new Weapon(raf, (int)this.x, (int)this.y);
-		} catch (Exception e) {	System.out.println("Broken: " + e);	}
+		if (!Display.demo) {
+			try {
+			//	RandomAccessFile raf = new RandomAccessFile("items/weps.bin", "rw");
+				RandomAccessFile raf = new RandomAccessFile("npc/weps.bin", "rw");
+				Entity.w[Entity.wIndex] = new Weapon(raf, (int)this.x, (int)this.y);
+			} catch (Exception e) {	System.out.println("Broken: " + e);	}
+		}
 		//Entity.wIndex++;
 		//System.out.println(Entity.wIndex);
 		if (this.next == null){	//Last npc in series

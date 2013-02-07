@@ -11,33 +11,62 @@ public class Weapon {
 	public boolean longRange; //Long range or not
 	public boolean equipped;
 	public boolean draw;	//Whether or not the mouse is hovering over it
-	public int slot;	//Inventory stuff
 	public int x, y; 	//Position on map, -1,-1 if not on map)
 	public int mid;		//Model # (1.png etc)
+	public int wid;
 	public String name;
-	public int damage, dur, rate, range;	//dur: # of swings before it breaks; rate: # of shots per 5 seconds
-	private long lastUsed;
-	public Image modelsml, modellrg;
-	private int recLen = 64;
+	public int damage, dur, range, rarity;	//dur: # of swings before it breaks; rate: # of shots per 5 seconds
+	public int rate;
+	public int ammo;
+//	private long lastUsed;
+	public Image modelL, modelS;
+	private int recLen = 68;
 	
-	public Weapon(RandomAccessFile raf, int x, int y){
-		
-		/*if ((int)(Math.random()*3+1) == 1){
-			this.longRange = true;
-			try {
-				model = ImageIO.read(new File("weapons/1.png"));
-			} catch (IOException e) {	System.out.println("Weapon error: #501 \n" + e);	}
-		}else{
-			this.longRange = false;
-			try {
-				model = ImageIO.read(new File("weapons/2.png"));
-			} catch (IOException e) {	System.out.println("Weapon error: #501 \n" + e);	}
+	public Weapon(){	this.wid = -1;	} //clear other variables?
+	
+	/**
+	 * For inventory
+	 * 
+	 * @param weap
+	 */
+	public Weapon(int weap){
+		if (weap > 0 && weap != 10 && weap != 15) {
+			try{
+				RandomAccessFile raf = new RandomAccessFile("npc/weps.bin", "rw");
+				this.readRaf(raf, weap-1); //TODO: make fist a weapon? or have it as a default if no weapon assigned?
+			}catch(Exception e){
+				e.printStackTrace();
+			}
+			this.ammo = 35;
 		}
-		damage = (int)(Math.random()*20+3);
-		dur = (int)(Math.random()*20+3);
-		rate = (int)(Math.random()*10+2);*/
+		else if (weap == 0 || weap == 10 || weap == 15) {
+			this.wid = weap;
+			this.ammo = 35;
+			if (weap == 0)
+				this.name = "Basic Sword";
+			else if (weap == 10)
+				this.name = "Handgun";
+			else if (weap == 15)
+				this.name = "Teleportation Ability";
+			try {
+				this.modelL = ImageIO.read(new File("items/" + this.wid + "l.png"));
+		    	this.modelS = ImageIO.read(new File("items/" + this.wid + "s.png"));
+			}
+			catch (IOException e) {	e.printStackTrace();	}
+		}
+	}
+	
+	/**
+	 * For NPC
+	 * 
+	 * @param raf
+	 * @param x
+	 * @param y
+	 */
+	public Weapon(RandomAccessFile raf, int x, int y){
 		try{
-			if ((int)(Math.random()*1+1) == 1){
+			//Old random weapon generation
+			/*if ((int)(Math.random()*1+1) == 1){
 				this.x = x;
 				this.y = y;
 				this.range = -1;
@@ -47,15 +76,37 @@ public class Weapon {
 				int recAt = (int)(Math.random()*(numRecs)-1);
 				this.readRaf(raf, recAt);
 				Entity.wIndex++;
+			}*/
+			int numRecs = (int)(raf.length()/recLen);
+			Weapon[] temp = new Weapon[numRecs];
+			for (int i = 0; i < numRecs; i++){
+				temp[i] = new Weapon();
+				temp[i].readRaf(raf, i);
 			}
-		}catch(Exception e){	e.printStackTrace(); } //System.out.println("Weapon loading failed\n" + e);	}
-		
-		
+			boolean found = false;
+			int num = (int)(Math.random()*100+1);
+			int full = 0;
+			for (int i = 0; i < numRecs && !found; i++){
+				if (num < (full+temp[i].getRarity())){
+					found = true;
+					this.x = x;
+					this.y = y;
+					this.readRaf(raf, i);
+					Entity.wIndex++;
+				}else
+					full += temp[i].getRarity();
+			}
+			if (!found)
+				System.out.println("No weapon found;  drop a random item");
+		}catch(Exception e){	
+			e.printStackTrace();
+		}
 	}
 	
 	public void readRaf(RandomAccessFile raf, int recordNumber) throws IOException{
     	if (raf.length() >= (recordNumber * recLen)){
     		raf.seek(recordNumber * recLen);
+    		this.wid = recordNumber+1;
 	    	this.name = readString(raf);
 	    	this.mid = raf.readInt();
 	    	int minDam = raf.readInt();
@@ -64,11 +115,13 @@ public class Weapon {
 	    	this.rate = raf.readInt();
 	    	this.range = raf.readInt();
 	    	this.dur = raf.readInt();
+	    	this.rarity = raf.readInt();
+	    	this.ammo = 35;
 	    //	System.out.println(minDam + "-" + maxDam);
 	    	//this.dur = raf.readInt();
 	    	//this.mid = raf.readInt();
-	    	modelsml = ImageIO.read(new File("items/" + this.mid + "s.png"));
-	    	modellrg = ImageIO.read(new File("items/" + this.mid + "l.png"));
+	    	modelL = ImageIO.read(new File("items/" + this.wid + "l.png"));
+	    	modelS = ImageIO.read(new File("items/" + this.wid + "s.png"));
     	}
     //	System.out.println(this.name);
     }
@@ -89,14 +142,15 @@ public class Weapon {
 	
 	public void drawWeapon(Graphics g, Display m, int x, int y, boolean small){
 		if (small)
-			g.drawImage(this.modelsml, x, y, x+25, y+25, 0, 0, 25, 25, m);
+			g.drawImage(this.modelS, x, y, m);
 		else
-			g.drawImage(this.modellrg, x, y, x+25, y+25, 0, 0, 25, 25, m);
+			g.drawImage(this.modelL, x, y, m);
 	}
 	
 	public int getDamage(){	return this.damage;	}
 	public int getDur(){	return this.dur;	}
-	public int getRate(){	return this.rate;	}
+	public float getRate(){	return this.rate;	}
+	public int getRarity(){	return this.rarity;	}
 	
 	public void takeDur(){	this.dur--;	}
 	
