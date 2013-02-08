@@ -302,7 +302,7 @@ public class Entity{
 					at.width = img.getWidth(m);
 					at.height = img.getHeight(m);
 					g.drawImage(img, at.dX, at.dY, at.dX+30, at.dY+30, 0, 0, 30, 30, m);
-				} catch (IOException e) {	System.out.println("Loading NPC model failed... :(" + "\n" + e);	}
+				} catch (IOException e) {	e.printStackTrace();	}
 			}
 			if (System.currentTimeMillis() - at.update < 5000)
 				at.showHealth(g);

@@ -105,7 +105,7 @@ public class NPC {
 			//	RandomAccessFile raf = new RandomAccessFile("items/weps.bin", "rw");
 				RandomAccessFile raf = new RandomAccessFile("npc/weps.bin", "rw");
 				Entity.w[Entity.wIndex] = new Weapon(raf, (int)this.x, (int)this.y);
-			} catch (Exception e) {	System.out.println("Broken: " + e);	}
+			} catch (Exception e) {	e.printStackTrace();	}
 		}
 		//Entity.wIndex++;
 		//System.out.println(Entity.wIndex);
