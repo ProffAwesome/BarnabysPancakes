@@ -40,7 +40,7 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 	int mx, my, mapx, mapy;
 	double prot, test, mxd, myd, PI;
 	boolean pressed;
-	Image player, dark, paused, tex, texdark, cursors, hudinv, minimapgfx, invmain, weapdisp;
+	Image player, dark, dead, paused, tex, texdark, cursors, hudinv, minimapgfx, invmain, weapdisp;
 	Cursor cursor;
 	Thread t;
 	public static Player p = new Player(true);
@@ -54,6 +54,7 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 	public static int[][] map;
 	public static int maph = 0;
 	public static int mapw = 0;
+	public static String mapName;
 	
 	long timea = System.currentTimeMillis(), timeb;
 	
@@ -77,6 +78,7 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 		try { //load all images
 			player = ImageIO.read(new File("gfx/rotationTest.png"));
 			dark = ImageIO.read(new File("gfx/darkscreen.png"));
+			dead = ImageIO.read(new File("gfx/dead.png"));
 			paused = ImageIO.read(new File("gfx/gamepaused.png"));
 			tex = ImageIO.read(new File("gfx/textures.png"));
 			texdark = ImageIO.read(new File("gfx/texturesdark.png"));
@@ -113,7 +115,7 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 		e.consume();
 	}
 	public final void mouseClicked(MouseEvent e) {
-		if (invopen) {
+		if (invopen && !p.dead) {
 			int xstart = w/2-invmain.getWidth(this)/2 + 15;
 			int ystart = (h-58)/2-invmain.getHeight(this)/2 + 46;
 			if (mx >= xstart && mx < xstart+448 && my >= ystart && my < ystart+224) {
@@ -205,6 +207,11 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 			}
 			e.consume();
 			draw();
+		}
+		else if (p.dead){
+			System.out.println("respawn");
+			readInMap(mapName);
+			p.resetStats();
 		}
 	}
 		//if (e.getClickCount() == 2) { }
@@ -335,12 +342,12 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 	public final Weapon invAction(Weapon type) {
 		if (type.wid < 5) { //short-range weapons
 			if (type.wid == 0) { //open-fist melee
-				hitNPC(Entity.root, (int)(p.x+31*Math.cos(prot)), (int)(p.y+31*Math.sin(prot)));
+				hitNPC(Entity.root, (int)(p.x+31*Math.cos(prot)), (int)(p.y+31*Math.sin(prot)), type.damage);
 		//		System.out.println((int)(p.x+31*Math.cos(prot)) + "," + (int)(p.y+31*Math.sin(prot)));
 			}
 			else {
 				int range = 4;
-				hitNPC(Entity.root, (int)(p.x+(range*10+21)*Math.cos(prot)), (int)(p.y+(range*10+21)*Math.sin(prot)));
+				hitNPC(Entity.root, (int)(p.x+(range*10+21)*Math.cos(prot)), (int)(p.y+(range*10+21)*Math.sin(prot)), type.damage);
 		//		System.out.println((int)(p.x+(range*10+21)*Math.cos(prot)) + "," + (int)(p.y+(range*10+21)*Math.sin(prot)));
 			}
 		}
@@ -390,15 +397,15 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 		}
 	}
 	
-	public final boolean hitNPC(NPC at, int hitx, int hity) {
+	public final boolean hitNPC(NPC at, int hitx, int hity, int dam) {
 		//try{
 			if (at != null){
 				if ((hitx < at.x3 && hitx > at.x1) && (hity < at.y2 && hity > at.y1)){
-					at.takeHealth(5);
+					at.takeHealth(dam);
 					return true;
 				}else{
 					if (at.next != null)
-						return hitNPC(at.next, hitx, hity);
+						return hitNPC(at.next, hitx, hity, dam);
 					else
 						return false;
 				}
@@ -413,6 +420,7 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 	public static final int[][] readInMap(String fn){
 		int[][] area = null;
 		e = new Entity(p);
+		mapName = fn;
 		try{
 			BufferedReader r = new BufferedReader(new InputStreamReader(new FileInputStream(fn)));
 			int entitynum = 0;
@@ -939,7 +947,12 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 			drawInv(g2);
 		if (!demo)
 			wepDesc(g2);
-		if (!running && !invopen) {
+		if (p.dead){
+			g2.setColor(Color.black);
+			g2.fillRect(0, 0, w, h);
+			g2.drawImage(dead, w/2-dead.getWidth(this)/2, h/2-dead.getHeight(this)/2, this);
+		}
+		if (!running && !invopen && !p.dead) {
 			g2.drawImage(dark, 0, 0, w, h, 0, 0, w, h, this);
 			g2.drawImage(paused, w/2-paused.getWidth(this)/2, h/2-paused.getHeight(this)/2, this);
 		}
