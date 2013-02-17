@@ -10,7 +10,7 @@ public class comps extends JPanel implements ActionListener/*, MenuElement*/ {
 	
 	public static int wid = 853; //width and height of the inside
 	public static int hei = 480; //content (not including the menu)
-	public static Applet display = new Display() { private static final long serialVersionUID = 1L; { init(hei, wid); }};
+	public static Display display = new Display() { private static final long serialVersionUID = 1L; { init(hei, wid); }};
 	
 //	JTextArea display = new JTextArea();
 	
@@ -141,7 +141,7 @@ public class comps extends JPanel implements ActionListener/*, MenuElement*/ {
 	public void actionPerformed(ActionEvent avt) {
 		if (avt.getSource() == mainmenu) {
 			Display.menu = 1;
-			display.repaint();
+			display.draw();
 		}
 		else if (avt.getSource() == load) {
 			int returnVal = fc.showOpenDialog(comps.this); //whether 'OK' or 'Cancel' was pressed in the dialog box
@@ -153,6 +153,7 @@ public class comps extends JPanel implements ActionListener/*, MenuElement*/ {
 			else {
 				;
 			}
+			display.draw();
 		}
 		else if (avt.getSource() == save) {
 			//TODO
@@ -168,6 +169,7 @@ public class comps extends JPanel implements ActionListener/*, MenuElement*/ {
 				Display.p = new Player(true);
 				Display.map = Display.readInMap(fc.getSelectedFile().getAbsolutePath());
 			} //end if
+			display.draw();
 		}
 		
 		
