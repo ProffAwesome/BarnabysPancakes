@@ -1,10 +1,18 @@
 public class Player {
-	double x, y;
-	int health, mana, cash, exp;
-	boolean dead = false;
-	public Weapon q, l, r; //assigned inventory
-	public Weapon[] inv = new Weapon[32];
-	public Player () { }
+	public static double x, y;
+	public static int health, mana, cash, exp;
+	
+	public static boolean bTele; 	//Current teleporter id
+	public static int nTele;	//Number of teleporters on map
+	public static long warpTimer;
+	
+	public static boolean dead = false;
+	
+	public static Weapon q, l, r; //assigned inventory
+	public static Weapon[] inv = new Weapon[32];
+	
+	public Player() { }
+	
 	public Player (boolean a) { //for dev/new player defaults
 		health = 100;
 		mana = 100;
@@ -21,7 +29,11 @@ public class Player {
 			inv[i] = new Weapon();
 	}
 	
-	public final void resetStats(){
+	/*****************************************************
+	 * Resets all the players stats back to defaults
+	 * TODO: Reset stats back to last checkpoint
+	 *****************************************************/
+	public static final void resetStats(){
 		health = 100;
 		mana = 100;
 		cash = 0;
@@ -57,4 +69,12 @@ public class Player {
 			dead = true;
 		}
 	}
+	
+	public static void checkTele(){
+		for (int i = 0; i < nTele; i++){
+			
+		}
+	}
+	
+	
 }

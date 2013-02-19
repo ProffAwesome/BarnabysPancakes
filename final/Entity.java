@@ -10,13 +10,17 @@ import javax.imageio.*;
 public class Entity{
 	static NPC root = null;
 	static int nNpc = -1; //The last NPC index 
-	Player p;
+	public static Player p;
 	public static Weapon[] w = new Weapon[20];
 	public static int wIndex;
+	
+	public static Teleport[] t = new Teleport[20];
+	public static int tIndex;
 	
 	public Entity(Player p){
 		this.p = p;
 		wIndex = 0;
+		tIndex = 0;
 		root = null;
 		nNpc = -1;
 		w = new Weapon[20];

@@ -425,17 +425,20 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 			BufferedReader r = new BufferedReader(new InputStreamReader(new FileInputStream(fn)));
 			int entitynum = 0;
 			int ln = 0;
+			int teleports = 0;
+			int tId = 0;
 			boolean fLine = true;
 			while (r.ready()){
 				String l = r.readLine();
 				if (fLine){	//Initialize
 					try{
-						String[] s = l.split(","); //0=w, 1=h, 2=p.x, 3=p.y, 4=number of entities at end of file
+						String[] s = l.split(","); //0=w, 1=h, 2=p.x, 3=p.y, 4=number of entities at end of file, 5=# of teleports
 						mapw = Integer.parseInt(s[0]);
 						maph = Integer.parseInt(s[1]);
 						p.x = (double)Integer.parseInt(s[2])*48 + 24;
 						p.y = (double)Integer.parseInt(s[3])*48 + 24;
 						entitynum = Integer.parseInt(s[4]);
+						teleports = Integer.parseInt(s[5]);
 						area = new int[maph][mapw];	//Generate the array
 						fLine = false;
 					}
@@ -461,6 +464,16 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 					int entd = Integer.parseInt(s[3]); //difficulty
 					e.addNPC(entt, entx, enty, entd);
 					entitynum--;
+				}
+				else if (teleports > 0){
+					String[] s = l.split(",");
+					int tx = Integer.parseInt(s[0]); //x position (all coords based on tile, not pixel)
+					int ty = Integer.parseInt(s[1]); //y position
+					String tTo = s[2]; //Destination's mapname
+					int nx = Integer.parseInt(s[3]); //destination x
+					int ny = Integer.parseInt(s[4]); //destination y
+					Entity.t[Entity.tIndex] = new Teleport(tId, tx, ty, tTo, nx, ny);
+					tId++;
 				}
 			}	//end while
 			r.close();
