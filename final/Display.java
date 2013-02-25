@@ -101,7 +101,7 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 		PI = Math.PI;
 		movex = 0.0;
 		movey = 0.0;
-		map = readInMap("", getClass().getResource("maps/Tutorial.map"), false);
+		map = readInMap("", getClass().getResource("maps/Tutorial.map"), false, 1);
 		this.requestFocus();
 	} //end init()
 	
@@ -210,7 +210,7 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 		}
 		else if (p.dead){
 			System.out.println("respawn");
-			readInMap(mapName, getClass().getResource(""), true);
+			readInMap(mapName, getClass().getResource(""), true, 1);
 			p.resetStats();
 		}
 	}
@@ -417,7 +417,7 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 		}*/
 	}
 	
-	public static final int[][] readInMap(String fnStr, URL fnURL, boolean isString){
+	public static final int[][] readInMap(String fnStr, URL fnURL, boolean isString, int spawnNum) { //spawnNum default is 0
 		int[][] area = null;
 		e = new Entity(p);
 		if (!isString)
@@ -429,22 +429,30 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 			int ln = 0;
 			int teleports = 0;
 			int tId = 0;
+			int playerNums = 0, pNumLn = 1;
 			boolean fLine = true;
 			while (r.ready()){
 				String l = r.readLine();
 				if (fLine){	//Initialize
 					try{
-						String[] s = l.split(","); //0=w, 1=h, 2=p.x, 3=p.y, 4=number of entities at end of file, 5=# of teleports
+						String[] s = l.split(","); //0=w, 1=h, 2=number of player spawns, 3=number of entities at end of file, 4=# of teleports
 						mapw = Integer.parseInt(s[0]);
 						maph = Integer.parseInt(s[1]);
-						p.x = (double)Integer.parseInt(s[2])*48 + 24;
-						p.y = (double)Integer.parseInt(s[3])*48 + 24;
-						entitynum = Integer.parseInt(s[4]);
-						teleports = Integer.parseInt(s[5]);
+						playerNums = Integer.parseInt(s[2]);
+						entitynum = Integer.parseInt(s[3]);
+						teleports = Integer.parseInt(s[4]);
 						area = new int[maph][mapw];	//Generate the array
 						fLine = false;
 					}
 					catch (Exception e) { System.out.println("Corrupt map file (#101)\n"+ e); }
+				}
+				else if (pNumLn <= playerNums) {
+					if (pNumLn == spawnNum) {
+						String[] s = l.split(",");
+						p.x = (double)Integer.parseInt(s[0])*48 + 24;
+						p.y = (double)Integer.parseInt(s[1])*48 + 24;
+					}
+					pNumLn++;
 				}
 				else if (ln < maph) {
 					int fill = 0;
@@ -471,10 +479,9 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 					String[] s = l.split(",");
 					int tx = Integer.parseInt(s[0]); //x position (all coords based on tile, not pixel)
 					int ty = Integer.parseInt(s[1]); //y position
-					String tTo = s[2]; //Destination's mapname
-					int nx = Integer.parseInt(s[3]); //destination x
-					int ny = Integer.parseInt(s[4]); //destination y
-					Entity.t[Entity.tIndex] = new Teleport(tId, tx, ty, tTo, nx, ny);
+					String tTo = s[2]; //Destination's mapname -- root folder is final/maps/
+					int sn = Integer.parseInt(s[3]); //spawn number
+					Entity.t[Entity.tIndex] = new Teleport(tId, tx, ty, tTo, sn);
 					tId++;
 				}
 			}	//end while

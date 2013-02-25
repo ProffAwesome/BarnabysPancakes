@@ -11,7 +11,7 @@ public class MapComps extends JPanel implements ActionListener/*, MenuElement*/ 
 	
 	public static int wid = 853; //width and height of the inside
 	public static int hei = 480; //content (not including the menu)
-	public static Applet display = new MapDisplay() { private static final long serialVersionUID = 1L; { init(hei, wid); }};
+	public static MapDisplay display = new MapDisplay() { private static final long serialVersionUID = 1L; { init(hei, wid); }};
 	
 	File loadfile = null;
 	public static JMenuBar menubar = new JMenuBar();
@@ -198,6 +198,7 @@ public class MapComps extends JPanel implements ActionListener/*, MenuElement*/ 
 		if (avt.getSource() == newmap) {
 			resizeMap(1, 1, true);
 			loadfile = null;
+			display.draw();
 		}
 		else if (avt.getSource() == load) {
 			int returnVal = fc.showOpenDialog(MapComps.this); //whether 'OK' or 'Cancel' was pressed in the dialog box
@@ -206,6 +207,7 @@ public class MapComps extends JPanel implements ActionListener/*, MenuElement*/ 
 				loadfile = file;
 				MapDisplay.map = MapDisplay.readInMap(file);
 			} //end if
+			display.draw();
 		}
 		else if (avt.getSource() == save) {
 			if (loadfile != null)
@@ -219,10 +221,12 @@ public class MapComps extends JPanel implements ActionListener/*, MenuElement*/ 
 		else if (avt.getSource() == mapsize) {
 			if (MapDisplay.mapin)
 				resizeMap(MapDisplay.mapw, MapDisplay.maph, false);
+			display.draw();
 		}
 		else if (avt.getSource() == replace) {
 			if (MapDisplay.mapin)
 				replaceTiles();
+			display.draw();
 		}
 		else if (avt.getSource() == diag) {
 			if (MapDisplay.drawDiag) {
@@ -240,6 +244,7 @@ public class MapComps extends JPanel implements ActionListener/*, MenuElement*/ 
 				MapDisplay.px = (MapDisplay.px*2) - ((MapDisplay.w-181)/2);
 				MapDisplay.py = (MapDisplay.py*2) - (MapDisplay.h/2);
 			}
+			display.draw();
 		}
 		else if (avt.getSource() == zoomout) {
 			if (MapDisplay.zoom < 16) {
@@ -247,6 +252,7 @@ public class MapComps extends JPanel implements ActionListener/*, MenuElement*/ 
 				MapDisplay.px = (MapDisplay.px/2) + ((MapDisplay.w-181)/4);
 				MapDisplay.py = (MapDisplay.py/2) + (MapDisplay.h/4);
 			}
+			display.draw();
 		}
 		else if (avt.getSource() == delete) {
 			if (MapDisplay.delete) {

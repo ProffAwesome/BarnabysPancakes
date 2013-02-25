@@ -5,15 +5,14 @@ public class Teleport{
 	private String mapTo;
 	public int tId;
 	public int x, y; 	//Co-ords of this teleporter
-	public int nx, ny; 	//Co-ords of matching teleporter
+	public int sn; 	//Co-ords of matching teleporter
 	
-	public Teleport(int tId, int x, int y, String mapTo, int nx, int ny){
+	public Teleport(int tId, int x, int y, String mapTo, int sn){
 		this.tId = tId;
 		this.x = x;
 		this.y = y;
 		this.mapTo = mapTo;
-		this.nx = nx;
-		this.ny = ny;
+		this.sn = sn;
 	}
 	
 	/*****************************************************
@@ -21,12 +20,12 @@ public class Teleport{
 	 * TODO: Initiate this teleport sequence
 	 *****************************************************/
 	public void startTele(){
-		Player.bTele = true;
-		Player.warpTimer = System.currentTimeMillis();
+		Display.p.bTele = true;
+		Display.p.warpTimer = System.currentTimeMillis();
 		(new Thread(this.new Warp())).start();
 	}
 	
-	public void stopTele(){	Player.bTele = false;	}
+	public void stopTele(){	Display.p.bTele = false;	}
 	
 	/*****************************************************
 	 * Teleport sequence.
@@ -37,11 +36,11 @@ public class Teleport{
 		public void run(){
 			try{
 				System.out.println("Teleport in:");
-				for (int i = (int)((System.currentTimeMillis() - Player.warpTimer)/1000); i < 5; i++){
+				for (int i = (int)((System.currentTimeMillis() - Display.p.warpTimer)/1000); i < 5; i++){
 					System.out.println(5-i);
-					if (System.currentTimeMillis() - Player.warpTimer > 3)	//They have been in teleporter for 3 seconds
-						if (Player.bTele == true)	//They haven't been interrupted
-							Display.readInMap(mapTo);
+					if (System.currentTimeMillis() - Display.p.warpTimer > 3)	//They have been in teleporter for 3 seconds
+						if (Display.p.bTele == true)	//They haven't been interrupted
+							Display.readInMap(mapTo, getClass().getResource(""), true, sn);
 						else
 							System.out.println("Interrupted");
 					Thread.sleep(1000);

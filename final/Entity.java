@@ -16,6 +16,7 @@ public class Entity{
 	
 	public static Teleport[] t = new Teleport[20];
 	public static int tIndex;
+
 	
 	public Entity(Player p){
 		this.p = p;

@@ -31,6 +31,7 @@ public class MapDisplay extends Applet implements MouseListener, MouseMotionList
 	Image tex, sel, plytile, playsel, tileset;
 	Image dbImage;
 	Graphics g2;
+	public static int playerSpawnNum = 0;
 	
 	/**
 	 * Initialises variables.
@@ -122,6 +123,8 @@ public class MapDisplay extends Applet implements MouseListener, MouseMotionList
 			if (selected[0] == 32) {
 				playerx = (mx-px)/(48/zoom);
 				playery = (my-py)/(48/zoom);
+				if (playerSpawnNum == 0)
+					playerSpawnNum = 1;
 			}
 			else if (e.getButton() == MouseEvent.BUTTON1) {
 				int tile = selected[0] + selected[1]*10;
@@ -223,52 +226,76 @@ public class MapDisplay extends Applet implements MouseListener, MouseMotionList
 	public static final void saveMap(File filename) {
 		//TODO: check that everything's good --> playerx/y, etc.
 		//TODO: pop up dialog box if checks not successful
-		try {
-			PrintWriter outputfile = new PrintWriter(new BufferedWriter(new FileWriter(filename)));
-			outputfile.println(mapw + "," + maph + "," + playerx + "," + playery + "," + entnum);
-			for (int i = 0; i < maph; i++) {
-				for (int j = 0; j < mapw; j++) {
-					if (map[i][j] < 16 && map[i][j] != -1)
-						outputfile.print("0");
-					
-					if (map[i][j] == -1)
-						outputfile.print("--");
-					else
-						outputfile.print(Integer.toHexString(map[i][j]).toUpperCase());
-				}
-				outputfile.println();
-			} //end for
-			outputfile.close();	//closes file
-			JOptionPane.showMessageDialog(MapCreator.frame, "Save successful!");
-		} //end try
-		catch(Exception e) {
-			System.out.println(e);
-			JOptionPane.showMessageDialog(MapCreator.frame, "Save unsuccessful.", "Not Saved", JOptionPane.ERROR_MESSAGE);
-		} //end catch
+		if (playerSpawnNum > 0) {
+			try {
+				PrintWriter outputfile = new PrintWriter(new BufferedWriter(new FileWriter(filename)));
+				outputfile.println(mapw + "," + maph + "," + playerSpawnNum + "," + entnum + ",0");
+				
+				//TODO: multiple player spawns
+				outputfile.println(playerx + "," + playery);
+				
+				for (int i = 0; i < maph; i++) {
+					for (int j = 0; j < mapw; j++) {
+						if (map[i][j] < 16 && map[i][j] != -1)
+							outputfile.print("0");
+						
+						if (map[i][j] == -1)
+							outputfile.print("--");
+						else
+							outputfile.print(Integer.toHexString(map[i][j]).toUpperCase());
+					}
+					outputfile.println();
+				} //end for
+				outputfile.close();	//closes file
+				JOptionPane.showMessageDialog(MapCreator.frame, "Save successful!");
+			} //end try
+			catch(Exception e) {
+				System.out.println(e);
+				JOptionPane.showMessageDialog(MapCreator.frame, "Save unsuccessful.", "Not Saved", JOptionPane.ERROR_MESSAGE);
+			} //end catch
+		}
+		else {
+			JOptionPane.showMessageDialog(MapCreator.frame, "You need at least one player spawn.", "No Player Spawn(s)", JOptionPane.ERROR_MESSAGE);
+		}
 	}
 	
 	public static final int[][] readInMap(File fn) {
 		int[][] area = null;
 		try{
 			BufferedReader r = new BufferedReader(new InputStreamReader(new FileInputStream(fn)));
+			int entitynum = 0;
 			int ln = 0;
+			int teleports = 0;
+			int tId = 0;
+			int playerNums = 0, pNumLn = 1;
 			boolean fLine = true;
 			while (r.ready()){
 				String l = r.readLine();
 				if (fLine){	//Initialize
 					try{
-						String[] s = l.split(","); //0=w, 1=h, 2=p.x, 3=p.y, 4=number of entities at end of file
+						String[] s = l.split(","); //0=w, 1=h, 2=number of player spawns, 3=number of entities at end of file, 4=# of teleports
 						mapw = Integer.parseInt(s[0]);
 						maph = Integer.parseInt(s[1]);
-						playerx = Integer.parseInt(s[2]);
-						playery = Integer.parseInt(s[3]);
+						playerNums = Integer.parseInt(s[2]);
+						entitynum = Integer.parseInt(s[3]);
+						teleports = Integer.parseInt(s[4]);
 						px = 0;
 						py = 0;
 						entnum = Integer.parseInt(s[4]);
 						area = new int[maph][mapw];	//Generate the array
 						fLine = false;
-					}catch (Exception e){	System.out.println("Corrupt map file (#101)\n"+ e);	}
-				}else{
+					}
+					catch (Exception e) { System.out.println("Corrupt map file (#101)\n"+ e); }
+				}
+				else if (pNumLn <= playerNums) {
+					if (pNumLn == 1) {
+						String[] s = l.split(",");
+						playerx/*[pNumLn-1]*/ = Integer.parseInt(s[0]);
+						playery/*[pNumLn-1]*/ = Integer.parseInt(s[1]);
+					}
+					pNumLn++;
+				}
+				else if (ln < maph) {
 					int fill = 0;
 					for (int i = 0; i < mapw; i++){
 						if (!l.substring(i*2, (i*2)+2).equals("--")) {
@@ -279,7 +306,25 @@ public class MapDisplay extends Applet implements MouseListener, MouseMotionList
 							area[ln][i] = -1;
 					}
 					ln++;
-				}	//end if
+				} //end else if
+				else if (entitynum > 0) {
+				/*	String[] s = l.split(","); //repeats x,y,type,health,damage,range for each entity
+					int entt = Integer.parseInt(s[0]); //type
+					int entx = Integer.parseInt(s[1])*48; //x position
+					int enty = Integer.parseInt(s[2])*48; //y position
+					int entd = Integer.parseInt(s[3]); //difficulty
+					e.addNPC(entt, entx, enty, entd);*/
+					entitynum--;
+				}
+				else if (teleports > 0){
+				/*	String[] s = l.split(",");
+					int tx = Integer.parseInt(s[0]); //x position (all coords based on tile, not pixel)
+					int ty = Integer.parseInt(s[1]); //y position
+					String tTo = s[2]; //Destination's mapname -- root folder is final/maps/
+					int sn = Integer.parseInt(s[3]); //spawn number
+					Entity.t[Entity.tIndex] = new Teleport(tId, tx, ty, tTo, sn);
+					tId++;*/
+				}
 			}	//end while
 			r.close();
 			mapin = true;
