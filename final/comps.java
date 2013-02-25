@@ -2,6 +2,8 @@ import java.applet.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
+import java.net.MalformedURLException;
+import java.net.URL;
 
 import javax.swing.*;
 
@@ -166,7 +168,7 @@ public class comps extends JPanel implements ActionListener/*, MenuElement*/ {
 			if (returnVal == JFileChooser.APPROVE_OPTION) {
 				Display.map = null;
 				Display.p = new Player(true);
-				Display.map = Display.readInMap(fc.getSelectedFile().getAbsolutePath());
+				Display.map = Display.readInMap(fc.getSelectedFile().getAbsolutePath(), getClass().getResource(""), true);
 			} //end if
 		}
 		

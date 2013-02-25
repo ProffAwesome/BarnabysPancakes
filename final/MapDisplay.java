@@ -13,7 +13,7 @@ public class MapDisplay extends Applet implements MouseListener, MouseMotionList
 	private static final long serialVersionUID = 1L;
 	
 	public static int w, h; //w is the width of the applet, h is the height
-	int mx, my, mpx, mpy;
+	int mx, my, mpx, mpy, prx, pry;
 	public static int entnum = 0; //number of entities
 	int[] box = new int[2]; //right-clicking make a box
 	int[][] copy;
@@ -52,10 +52,10 @@ public class MapDisplay extends Applet implements MouseListener, MouseMotionList
 		addMouseListener(this);
 		addMouseMotionListener(this);
 		try { //load all images
-			tex = ImageIO.read(new File("gfx/textures.png"));
-			sel = ImageIO.read(new File("gfx/tileselected.png"));
-			plytile = ImageIO.read(new File("gfx/player_entity_tiles.png"));
-			playsel = ImageIO.read(new File("gfx/playerselected.png"));
+			tex = ImageIO.read(getClass().getResource("gfx/textures.png"));
+			sel = ImageIO.read(getClass().getResource("gfx/tileselected.png"));
+			plytile = ImageIO.read(getClass().getResource("gfx/player_entity_tiles.png"));
+			playsel = ImageIO.read(getClass().getResource("gfx/playerselected.png"));
 		}
 		catch(Exception e) { e.printStackTrace(); }
 		
@@ -70,6 +70,38 @@ public class MapDisplay extends Applet implements MouseListener, MouseMotionList
 	public final void mouseClicked(MouseEvent e) {
 		mx = e.getX();
 		my = e.getY();
+		
+		e.consume();
+	}
+	public final void mousePressed(MouseEvent e) {
+		mpx = e.getX();
+		mpy = e.getY();
+		prx = mpx;
+		pry = mpy;
+		e.consume();
+	}
+	public final void mouseReleased(MouseEvent e) {
+		mx = e.getX();
+		my = e.getY();
+		if (Math.abs(mx-prx) <= 3 && Math.abs(my-pry) <= 3)
+			clickComm(e);
+		draw();
+	}
+	public final void mouseMoved(MouseEvent e) { }
+	public final void mouseDragged(MouseEvent e) {
+		mx = e.getX();
+		my = e.getY();
+		if (Math.abs(mx-prx) > 3)
+			px += mx-mpx;
+		if (Math.abs(my-pry) > 3)
+			py += my-mpy;
+		mpx = mx;
+		mpy = my;
+		draw();
+		e.consume();
+	}
+	
+	public void clickComm(MouseEvent e) {
 		if (mx > w-181 && my < 469) { //if in the tile selection
 			selected[0] = (mx-(w-182))/18;
 			selected[1] = (my+1)/18;
@@ -186,25 +218,6 @@ public class MapDisplay extends Applet implements MouseListener, MouseMotionList
 			}
 			draw();
 		}
-		e.consume();
-	}
-	public final void mousePressed(MouseEvent e) {
-		mpx = e.getX();
-		mpy = e.getY();
-		e.consume();
-	}
-	public final void mouseReleased(MouseEvent e) { }
-	public final void mouseMoved(MouseEvent e) { }
-	public final void mouseDragged(MouseEvent e) {
-		mx = e.getX();
-		my = e.getY();
-		px += mx-mpx;
-		py += my-mpy;
-		mpx = mx;
-		mpy = my;
-		draw();
-		//repaint();
-		e.consume();
 	}
 	
 	public static final void saveMap(File filename) {

@@ -8,6 +8,9 @@ import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.awt.image.renderable.ParameterBlock;
 import java.io.*;
+import java.net.MalformedURLException;
+import java.net.URL;
+
 import javax.imageio.*;
 import javax.media.jai.*;
 
@@ -76,17 +79,17 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 		addMouseMotionListener(this);
 		addKeyListener(this);
 		try { //load all images
-			player = ImageIO.read(new File("gfx/rotationTest.png"));
-			dark = ImageIO.read(new File("gfx/darkscreen.png"));
-			dead = ImageIO.read(new File("gfx/dead.png"));
-			paused = ImageIO.read(new File("gfx/gamepaused.png"));
-			tex = ImageIO.read(new File("gfx/textures.png"));
-			texdark = ImageIO.read(new File("gfx/texturesdark.png"));
-			cursors = ImageIO.read(new File("gfx/cursor.png")); //change cursor to be current weapon?
-			hudinv = ImageIO.read(new File("gfx/hudinv.png"));
-			minimapgfx = ImageIO.read(new File("gfx/minimap.png"));
-			invmain = ImageIO.read(new File("gfx/inventory.png"));
-			weapdisp = ImageIO.read(new File("gfx/weapondisplay.png"));
+			player = ImageIO.read(getClass().getResource("gfx/rotationTest.png"));
+			dark = ImageIO.read(getClass().getResource("gfx/darkscreen.png"));
+			dead = ImageIO.read(getClass().getResource("gfx/dead.png"));
+			paused = ImageIO.read(getClass().getResource("gfx/gamepaused.png"));
+			tex = ImageIO.read(getClass().getResource("gfx/textures.png"));
+			texdark = ImageIO.read(getClass().getResource("gfx/texturesdark.png"));
+			cursors = ImageIO.read(getClass().getResource("gfx/cursor.png")); //change cursor to be current weapon?
+			hudinv = ImageIO.read(getClass().getResource("gfx/hudinv.png"));
+			minimapgfx = ImageIO.read(getClass().getResource("gfx/minimap.png"));
+			invmain = ImageIO.read(getClass().getResource("gfx/inventory.png"));
+			weapdisp = ImageIO.read(getClass().getResource("gfx/weapondisplay.png"));
 		}
 		catch(Exception e) { e.printStackTrace(); }
 		
@@ -98,10 +101,7 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 		PI = Math.PI;
 		movex = 0.0;
 		movey = 0.0;
-		if (!demo)
-			map = readInMap("maps/Tutorial.map");//forestmap.map");
-		else
-			map = readInMap("maps/Tutorial.map");
+		map = readInMap("", getClass().getResource("maps/Tutorial.map"), false);
 		this.requestFocus();
 	} //end init()
 	
@@ -210,7 +210,7 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 		}
 		else if (p.dead){
 			System.out.println("respawn");
-			readInMap(mapName);
+			readInMap(mapName, getClass().getResource(""), true);
 			p.resetStats();
 		}
 	}
@@ -417,12 +417,14 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 		}*/
 	}
 	
-	public static final int[][] readInMap(String fn){
+	public static final int[][] readInMap(String fnStr, URL fnURL, boolean isString){
 		int[][] area = null;
 		e = new Entity(p);
-		mapName = fn;
+		if (!isString)
+			fnStr = fnURL.toString().replaceAll("%20", " ").substring(6);
+		mapName = fnStr;
 		try{
-			BufferedReader r = new BufferedReader(new InputStreamReader(new FileInputStream(fn)));
+			BufferedReader r = new BufferedReader(new InputStreamReader(new FileInputStream(fnStr)));
 			int entitynum = 0;
 			int ln = 0;
 			int teleports = 0;
@@ -480,7 +482,7 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 			mapChanged = true;
 			return area;
 		}
-		catch (Exception e){	System.out.println("Corrupt map file (#102)\n" + e); return null;	}
+		catch (Exception e){	System.out.println("Corrupt map file (#102)\n" + e);	return null;	}
 	}
 	
 	public final void drawMap(Graphics g2) {
@@ -638,7 +640,7 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 			mapfront = null;
 			mapfront = new BufferedImage(mapw*size, maph*size, BufferedImage.TYPE_INT_ARGB_PRE);
 			Graphics2D g3d = (Graphics2D)mapfront.getGraphics();
-			g3d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);//RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+			g3d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
 			for (int yc = 0; yc <= maph-1; yc++) {
 				for (int xc = 0; xc <= mapw-1; xc++) {
 					destx = xc*size;
@@ -703,14 +705,9 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 	public final void movePlayer() {
 		if (running) {
 			double speed = 5.1666;
-		/*	if (run && (moveup || movedown) && (moveleft || moveright))
-				speed = 4.6598337;
-			else if (run)
-				speed = 6.59;
-			else if (!run && (moveup || movedown) && (moveleft || moveright))
-				speed = 2.9839906;
-			else
-				speed = 4.22;*/
+			if (map[(int)p.y/48][(int)p.x/48] == 3)
+				speed *= 0.6667; //water movement
+			
 			if (!((moveup || movedown) && (moveleft || moveright)))
 				speed = Math.sqrt(speed*speed*2);
 			if (run)
