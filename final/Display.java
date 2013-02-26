@@ -43,12 +43,12 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 	int mx, my, mapx, mapy;
 	double prot, test, mxd, myd, PI;
 	boolean pressed;
-	Image player, dark, dead, paused, tex, texdark, cursors, hudinv, minimapgfx, invmain, weapdisp;
+	Image player, dark, dead, paused, tex, texdark, waterfade, cursors, hudinv, minimapgfx, invmain, weapdisp;
 	Cursor cursor;
 	Thread t;
 	public static Player p = new Player(true);
 	public static Entity e = new Entity(p);
-	Proj rootProj;
+	public static Proj rootProj;
 	
 	Image dbImage, mapback, minimap, minimapback;
 	BufferedImage mapfront;
@@ -85,6 +85,7 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 			paused = ImageIO.read(getClass().getResource("gfx/gamepaused.png"));
 			tex = ImageIO.read(getClass().getResource("gfx/textures.png"));
 			texdark = ImageIO.read(getClass().getResource("gfx/texturesdark.png"));
+			waterfade = ImageIO.read(getClass().getResource("gfx/waterfade.png"));
 			cursors = ImageIO.read(getClass().getResource("gfx/cursor.png")); //change cursor to be current weapon?
 			hudinv = ImageIO.read(getClass().getResource("gfx/hudinv.png"));
 			minimapgfx = ImageIO.read(getClass().getResource("gfx/minimap.png"));
@@ -101,7 +102,8 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 		PI = Math.PI;
 		movex = 0.0;
 		movey = 0.0;
-		map = readInMap("", getClass().getResource("maps/Tutorial.map"), false, 1);
+		map = readInMap("", getClass().getResource("maps/BPisland.map"), false, 1);
+		
 		this.requestFocus();
 	} //end init()
 	
@@ -418,11 +420,15 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 	}
 	
 	public static final int[][] readInMap(String fnStr, URL fnURL, boolean isString, int spawnNum) { //spawnNum default is 0
+		//resets
 		int[][] area = null;
 		e = new Entity(p);
+		rootProj = null;
+		
 		if (!isString)
 			fnStr = fnURL.toString().replaceAll("%20", " ").substring(6);
 		mapName = fnStr;
+		
 		try{
 			BufferedReader r = new BufferedReader(new InputStreamReader(new FileInputStream(fnStr)));
 			int entitynum = 0;
@@ -496,37 +502,10 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 		g2.setColor(Color.black);
 		g2.fillRect(0, 0, w, h);
 		
-		int minx = 0, miny = 0, maxx = mapw-1, maxy = maph-1;
-		
-	/*	if (p.x < w/2+47)
-			minx = 0;
-		else
-			minx = ((int)p.x/48+1)-((w/2)/48+1)-1;
-		if (p.y < h/2+47)
-			miny = 0;
-		else
-			miny = ((int)p.y/48+1)-((h/2)/48+1)-1;
-		
-		maxx = minx + (w/48)+1;
-		maxy = miny + (h/48)+1;
-		
-		if (maxx >= mapw)
-			maxx = mapw-1;
-		if (maxy >= maph)
-			maxy = maph-1;
-		if (minx < 0)
-			minx = 0;
-		if (miny < 0)
-			miny = 0;*/
-		
-		//mod for edges, don't draw over edge
-		
-	//	minx = 5;
-	//	miny = 5;
-	//	maxx = 17;
-	//	maxy = 17;
+		boolean[][] fade = new boolean[maph][mapw];
 		
 		if (mapChanged) {
+			int minx = 0, miny = 0, maxx = mapw-1, maxy = maph-1;
 			mapback = null;
 			mapback = createImage(mapw*48, maph*48);
 			Graphics g3 = mapback.getGraphics();
@@ -545,10 +524,75 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 					}
 					else
 						g3.drawImage(tex, destx, desty, destx+48, desty+48, sourcex, sourcey, sourcex+48, sourcey+48, this);
+					
+					if ((map[yc][xc] == 3 || map[yc][xc] == 63) && xc > 0 && xc < mapw-1 && yc > 0 && yc < maph-1) {
+						if ((map[yc+1][xc] == 3 || map[yc+1][xc] == 63) && (map[yc-1][xc] == 3 || map[yc-1][xc] == 63) && (map[yc][xc+1] == 3 || map[yc][xc+1] == 63) && (map[yc][xc-1] == 3 || map[yc][xc-1] == 63))
+							fade[yc][xc] = true;
+						else
+							fade[yc][xc] = false;
+					}
+					else
+						fade[yc][xc] = false;
+				}
+			}
+			
+			for (int yc = 1; yc < maph-1; yc++) {
+				for (int xc = 1; xc < mapw-1; xc++) {
+					if (fade[yc][xc] == true)
+						fade = waterFade(fade, xc, yc);
 				}
 			}
 		}
 		g2.drawImage(mapback, w/2-(int)p.x, h/2-(int)p.y, this);
+	}
+	
+	public final boolean[][] waterFade(boolean[][] fade, int xc, int yc) {
+		int destx = (xc*48);
+		int desty = (yc*48);
+		Graphics g3 = mapback.getGraphics();
+		
+		int c = 0;
+		if (fade[yc+1][xc])
+			c++;
+		if (fade[yc-1][xc])
+			c++;
+		if (fade[yc][xc+1])
+			c++;
+		if (fade[yc][xc-1])
+			c++;
+		
+		if (c < 2) {
+			fade[yc][xc] = false;
+		}
+		else if (c == 2) {
+			boolean remove = true;
+			if (fade[yc+1][xc] && fade[yc][xc+1] && fade[yc+1][xc+1])
+				remove = false;
+			if (fade[yc-1][xc] && fade[yc][xc+1] && fade[yc-1][xc+1])
+				remove = false;
+			if (fade[yc+1][xc] && fade[yc][xc-1] && fade[yc+1][xc-1])
+				remove = false;
+			if (fade[yc-1][xc] && fade[yc][xc-1] && fade[yc-1][xc-1])
+				remove = false;
+			
+			if (remove)
+				fade[yc][xc] = false;
+			else { //TODO: draw corner piece
+			//	g3.drawImage(waterfade, destx, desty, destx+48, desty+48, 144, 0, 192, 48, this);
+				g3.setColor(Color.red);
+				g3.fillRect(destx, desty, 48, 48);
+			}
+		}
+		else if (c == 3) { //TODO: draw side piece
+		//	g3.drawImage(waterfade, destx, desty, destx+48, desty+48, 144, 0, 192, 48, this);
+			g3.setColor(Color.green);
+			g3.fillRect(destx, desty, 48, 48);
+		}
+		else { //draw full block
+			//TODO: determine the inside corners
+			g3.drawImage(waterfade, destx, desty, destx+48, desty+48, 144, 0, 192, 48, this);
+		}
+		return fade;
 	}
 	
 	public final void drawMap3D(Graphics g2) {
@@ -759,12 +803,12 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 		
 		if (map[(int)p.y/48][(int)(p.x+21)/48] >= 60)
 			p.x = ((int)(p.x+21)/48)*48-22;
-		if (map[(int)p.y/48][(int)(p.x-21)/48] >= 60) //x collisions
+		if (map[(int)p.y/48][(int)(p.x-21)/48] >= 60) //x tip collisions
 			p.x = ((int)(p.x-21)/48+1)*48+21;
 		
 		if (map[(int)(p.y+21)/48][(int)p.x/48] >= 60)
 			p.y = ((int)(p.y+21)/48)*48-22;
-		if (map[(int)(p.y-21)/48][(int)p.x/48] >= 60) //y collisions
+		if (map[(int)(p.y-21)/48][(int)p.x/48] >= 60) //y tip collisions
 			p.y = ((int)(p.y-21)/48+1)*48+21;
 		
 		for (double ang = change; ang < 2*PI; ang += change) { //circular collisions
@@ -879,7 +923,7 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 			if (rootProj != null) {
 				boolean remove = false;
 				do {
-					remove = rootProj.moveProj(); //wat
+					remove = rootProj.moveProj();
 					if (remove && rootProj.next != null)
 						rootProj = rootProj.next;
 					else if (remove && rootProj.next == null)
@@ -1106,7 +1150,8 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 	
 	public final void draw() {
 		Graphics g = getGraphics();
-		dbImage = createImage(w, h);
+		if (mapChanged)
+			dbImage = createImage(w, h);
 		g2 = dbImage.getGraphics();
 		if (menu == 0) { //in-game
 			drawMap(g2);
