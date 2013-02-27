@@ -8,16 +8,12 @@ import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.awt.image.renderable.ParameterBlock;
 import java.io.*;
-import java.net.MalformedURLException;
 import java.net.URL;
-
 import javax.imageio.*;
 import javax.media.jai.*;
 
 public class Display extends Applet implements MouseListener, MouseMotionListener, KeyListener {
 	private static final long serialVersionUID = 1L;
-	
-	public static boolean demo = false;
 	
 	public static int w, h; //w is the width of the applet, h is the height
 	int x, y;
@@ -285,10 +281,8 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 						invAction(p.q);
 					break;
 				case KeyEvent.VK_E:
-					if (!demo) {
-						invopen = true;
-						pauseGame();
-					}
+					invopen = true;
+					pauseGame();
 					break;
 				case KeyEvent.VK_F:
 					pickupWeap();
@@ -538,8 +532,17 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 			
 			for (int yc = 1; yc < maph-1; yc++) {
 				for (int xc = 1; xc < mapw-1; xc++) {
-					if (fade[yc][xc] == true)
+					if (fade[yc][xc] == true) {
 						fade = waterFade(fade, xc, yc);
+						if (fade[yc][xc] == false) { //to check if an adjacent tile's fade should change
+							if (fade[yc][xc-1] == true)
+								fade = waterFade(fade, xc-1, yc);
+							if (fade[yc-1][xc] == true)
+								fade = waterFade(fade, xc, yc-1);
+							if (fade[yc-1][xc-1] == true)
+								fade = waterFade(fade, xc-1, yc-1);
+						}
+					}
 				}
 			}
 		}
@@ -550,6 +553,7 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 		int destx = (xc*48);
 		int desty = (yc*48);
 		Graphics g3 = mapback.getGraphics();
+		g3.drawImage(tex, destx, desty, destx+48, desty+48, 144, 0, 192, 48, this);
 		
 		int c = 0;
 		if (fade[yc+1][xc])
@@ -577,20 +581,59 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 			
 			if (remove)
 				fade[yc][xc] = false;
-			else { //TODO: draw corner piece
-			//	g3.drawImage(waterfade, destx, desty, destx+48, desty+48, 144, 0, 192, 48, this);
-				g3.setColor(Color.red);
-				g3.fillRect(destx, desty, 48, 48);
+			else { //corner piece
+				short ang = 0;
+				if (fade[yc+1][xc] && fade[yc][xc+1] && fade[yc+1][xc+1])
+					ang = 0;
+				if (fade[yc+1][xc] && fade[yc][xc-1] && fade[yc+1][xc-1])
+					ang = 1;
+				if (fade[yc-1][xc] && fade[yc][xc-1] && fade[yc-1][xc-1])
+					ang = 2;
+				if (fade[yc-1][xc] && fade[yc][xc+1] && fade[yc-1][xc+1])
+					ang = 3;
+				
+				Graphics2D g3d = (Graphics2D)mapback.getGraphics();
+				g3d.translate(destx+24, desty+24);
+				g3d.rotate(ang*(PI/2));
+				g3d.drawImage(waterfade, -24, -24, 24, 24, 0, 0, 48, 48, this);
 			}
 		}
-		else if (c == 3) { //TODO: draw side piece
-		//	g3.drawImage(waterfade, destx, desty, destx+48, desty+48, 144, 0, 192, 48, this);
-			g3.setColor(Color.green);
-			g3.fillRect(destx, desty, 48, 48);
+		else if (c == 3) { //side piece
+			short ang = 0;
+			if (!fade[yc-1][xc])
+				ang = 0;
+			if (!fade[yc][xc+1])
+				ang = 1;
+			if (!fade[yc+1][xc])
+				ang = 2;
+			if (!fade[yc][xc-1])
+				ang = 3;
+			
+			Graphics2D g3d = (Graphics2D)mapback.getGraphics();
+			g3d.translate(destx+24, desty+24);
+			g3d.rotate(ang*(PI/2));
+			g3d.drawImage(waterfade, -24, -24, 24, 24, 48, 0, 96, 48, this);
 		}
-		else { //draw full block
-			//TODO: determine the inside corners
-			g3.drawImage(waterfade, destx, desty, destx+48, desty+48, 144, 0, 192, 48, this);
+		else { //full block or inside corner
+			short corner = 0;
+			if (!fade[yc-1][xc-1])
+				corner = 1;
+			if (!fade[yc-1][xc+1])
+				corner = 2;
+			if (!fade[yc+1][xc+1])
+				corner = 3;
+			if (!fade[yc+1][xc-1])
+				corner = 4;
+			
+			if (corner > 0) { //inside corner
+				Graphics2D g3d = (Graphics2D)mapback.getGraphics();
+				g3d.translate(destx+24, desty+24);
+				g3d.rotate((corner-1)*(PI/2));
+				g3d.drawImage(waterfade, -24, -24, 24, 24, 96, 0, 144, 48, this);
+			}
+			else { //full block
+				g3.drawImage(waterfade, destx, desty, destx+48, desty+48, 144, 0, 192, 48, this);
+			}
 		}
 		return fade;
 	}
@@ -1006,8 +1049,7 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 		}
 		if (invopen)
 			drawInv(g2);
-		if (!demo)
-			wepDesc(g2);
+		wepDesc(g2);
 		if (p.dead){
 			g2.setColor(Color.black);
 			g2.fillRect(0, 0, w, h);
@@ -1150,8 +1192,7 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 	
 	public final void draw() {
 		Graphics g = getGraphics();
-		if (mapChanged)
-			dbImage = createImage(w, h);
+		dbImage = createImage(w, h);
 		g2 = dbImage.getGraphics();
 		if (menu == 0) { //in-game
 			drawMap(g2);

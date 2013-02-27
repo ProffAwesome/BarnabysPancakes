@@ -100,13 +100,11 @@ public class NPC {
 	}
 	
 	public void killNpc(){
-		if (!Display.demo) {
-			try {
-			//	RandomAccessFile raf = new RandomAccessFile("items/weps.bin", "rw");
-				RandomAccessFile raf = new RandomAccessFile("npc/weps.bin", "rw");
-				Entity.w[Entity.wIndex] = new Weapon(raf, (int)this.x, (int)this.y);
-			} catch (Exception e) {	e.printStackTrace();	}
-		}
+		try {
+		//	RandomAccessFile raf = new RandomAccessFile("items/weps.bin", "rw");
+			RandomAccessFile raf = new RandomAccessFile("npc/weps.bin", "rw");
+			Entity.w[Entity.wIndex] = new Weapon(raf, (int)this.x, (int)this.y);
+		} catch (Exception e) {	e.printStackTrace();	}
 		//Entity.wIndex++;
 		//System.out.println(Entity.wIndex);
 		if (this.next == null){	//Last npc in series

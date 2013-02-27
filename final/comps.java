@@ -1,9 +1,6 @@
-import java.applet.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
-import java.net.MalformedURLException;
-import java.net.URL;
 
 import javax.swing.*;
 
@@ -104,8 +101,7 @@ public class comps extends JPanel implements ActionListener/*, MenuElement*/ {
 		dev.add(new JSeparator());
 		dev.add(update2);
 		loadmap.addActionListener(this);
-		if (!Display.demo)
-			menubar.add(dev);
+		menubar.add(dev);
 		
 		help = new JMenu("Help");
 		howtoplay = new JMenuItem("How To Play");

@@ -21,10 +21,7 @@ public class Player {
 		q = new Weapon(0);
 		l = new Weapon(10);
 		dead = false;
-		if (!Display.demo)
-			r = new Weapon(15);
-		else
-			r = new Weapon();
+		r = new Weapon(15);
 		for (int i = 0; i < inv.length; i++)
 			inv[i] = new Weapon();
 	}
@@ -41,10 +38,7 @@ public class Player {
 		q = new Weapon(0);
 		l = new Weapon(10);
 		dead = false;
-		if (!Display.demo)
-			r = new Weapon(15);
-		else
-			r = new Weapon();
+		r = new Weapon(15);
 		for (int i = 0; i < inv.length; i++)
 			inv[i] = new Weapon();
 	}

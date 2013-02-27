@@ -333,6 +333,48 @@ public class MapDisplay extends Applet implements MouseListener, MouseMotionList
 		catch (Exception e){	System.out.println("Corrupt map file (#102)\n" + e); return null;	}
 	}
 	
+	public static final int[][] readInOldMap(File fn) {
+		int[][] area = null;
+		try{
+			BufferedReader r = new BufferedReader(new InputStreamReader(new FileInputStream(fn)));
+			int ln = 0;
+			boolean fLine = true;
+			while (r.ready()){
+				String l = r.readLine();
+				if (fLine){	//Initialize
+					try{
+						String[] s = l.split(","); //0=w, 1=h, 2=p.x, 3=p.y, 4=number of entities at end of file
+						mapw = Integer.parseInt(s[0]);
+						maph = Integer.parseInt(s[1]);
+						playerx = Integer.parseInt(s[2]);
+						playery = Integer.parseInt(s[3]);
+						playerSpawnNum = 1;
+						px = 0;
+						py = 0;
+						entnum = Integer.parseInt(s[4]);
+						area = new int[maph][mapw];	//Generate the array
+						fLine = false;
+					}catch (Exception e){	System.out.println("Corrupt map file (#101)\n"+ e);	}
+				}else{
+					int fill = 0;
+					for (int i = 0; i < mapw; i++){
+						if (!l.substring(i*2, (i*2)+2).equals("--")) {
+							fill = Integer.parseInt(l.substring(i*2, (i*2)+2), 16);
+							area[ln][i] = fill;
+						}
+						else
+							area[ln][i] = -1;
+					}
+					ln++;
+				}	//end if
+			}	//end while
+			r.close();
+			mapin = true;
+			return area;
+		}
+		catch (Exception e){	System.out.println("Corrupt map file (#102)\n" + e); return null;	}
+	}
+	
 	public void drawMap(Graphics g2) {
 		//	Graphics g2 = getGraphics();
 		if (mapin) {

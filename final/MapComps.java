@@ -1,8 +1,6 @@
-import java.applet.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
-
 import javax.swing.*;
 import javax.swing.filechooser.FileFilter;
 
@@ -16,7 +14,7 @@ public class MapComps extends JPanel implements ActionListener/*, MenuElement*/ 
 	File loadfile = null;
 	public static JMenuBar menubar = new JMenuBar();
 	JMenu file;
-	JMenuItem newmap, load, save, saveas, exit, mapsize, replace, diag, zoomin, zoomout, delete;
+	JMenuItem newmap, load, loadold, save, saveas, exit, mapsize, replace, diag, zoomin, zoomout, delete;
 	JFileChooser fc = new JFileChooser(); //file chooser window
 	
 	boolean read = false; //if data is read
@@ -38,6 +36,7 @@ public class MapComps extends JPanel implements ActionListener/*, MenuElement*/ 
 		
 		newmap = new JMenuItem("New Map");
 		load = new JMenuItem("Load Map");
+		loadold = new JMenuItem("Load Old Map");
 		save = new JMenuItem("Save Map");
 		saveas = new JMenuItem("Save Map As");
 		exit = new JMenuItem("Exit");
@@ -50,6 +49,7 @@ public class MapComps extends JPanel implements ActionListener/*, MenuElement*/ 
 		
 		file.add(newmap);
 		file.add(load);
+		file.add(loadold);
 		file.add(save);
 		file.add(saveas);
 		file.add(exit);
@@ -64,6 +64,7 @@ public class MapComps extends JPanel implements ActionListener/*, MenuElement*/ 
 		
 		newmap.addActionListener(this);
 		load.addActionListener(this);
+		loadold.addActionListener(this);
 		save.addActionListener(this);
 		saveas.addActionListener(this);
 		exit.addActionListener(this);
@@ -206,6 +207,15 @@ public class MapComps extends JPanel implements ActionListener/*, MenuElement*/ 
 				File file = fc.getSelectedFile();
 				loadfile = file;
 				MapDisplay.map = MapDisplay.readInMap(file);
+			} //end if
+			display.draw();
+		}
+		else if (avt.getSource() == loadold) {
+			int returnVal = fc.showOpenDialog(MapComps.this); //whether 'OK' or 'Cancel' was pressed in the dialog box
+			if (returnVal == JFileChooser.APPROVE_OPTION) {
+				File file = fc.getSelectedFile();
+				loadfile = file;
+				MapDisplay.map = MapDisplay.readInOldMap(file);
 			} //end if
 			display.draw();
 		}
