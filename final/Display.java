@@ -98,7 +98,7 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 		PI = Math.PI;
 		movex = 0.0;
 		movey = 0.0;
-		map = readInMap("", getClass().getResource("maps/BPisland.map"), false, 1);
+		map = readInMap("", getClass().getResource("maps/forestmap.map")/*("maps/BPisland.map")*/, false, 1);
 		
 		this.requestFocus();
 	} //end init()
@@ -639,6 +639,13 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 	}
 	
 	public final void drawMap3D(Graphics g2) {
+		short[][] drawn = new short[maph][mapw];
+		for (int yc = 0; yc < maph; yc++) {
+			for (int xc = 0; xc < mapw; xc++) {
+				drawn[yc][xc] = 0;
+			}
+		}
+		
 		int minx = 0, miny = 0, maxx = mapw-1, maxy = maph-1;
 		
 		if (p.x < w/2+47)
@@ -672,61 +679,179 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 					destx = (int)Math.round((xc*size) + xpo);
 					desty = (int)Math.round((yc*size) + ypo);
 					if (xc+1 <= maxx && map[yc][xc+1] < 120 && map[yc][xc+1] != -1 && p.x > (xc+1)*48+1) {
-						destx2 = destx + size;
-						desty2 = desty + size;
-						destx3 = ((xc+1)*48) + (w/2-(int)p.x);
-						desty3 = (yc*48) + (h/2-(int)p.y);
-						boolean drawblack = false;
-						if (map[yc][xc] == -1)
-							drawblack = true;
-						if (destx2-destx3 != 0 && desty2-desty3 != 0) {
-							int[] xco = {destx2, destx2, destx3, destx3};
-							int[] yco = {desty2, desty2-size, desty3, desty3+48};
-							drawImage3D(xco, yco, xc, yc, texdark, drawblack);
+						if (((drawn[yc][xc]%8)%4)%2 != 1) {
+							boolean a = true;
+							int r = 1;
+							while(a) {
+								if (yc+r <= maxy && (map[yc+r][xc] >= 120 || map[yc+r][xc] == -1) && map[yc+r][xc+1] < 120 && map[yc+r][xc+1] != -1) {
+									drawn[yc+r][xc] += 1;
+									r += 1;
+								}
+								else {
+									r -= 1;
+									a = false;
+								}
+							}
+							
+							if (r == 0) {
+								destx2 = destx + size;
+								desty2 = desty + size;
+								destx3 = ((xc+1)*48) + (w/2-(int)p.x);
+								desty3 = (yc*48) + (h/2-(int)p.y);
+								boolean drawblack = false;
+								if (map[yc][xc] == -1)
+									drawblack = true;
+								if (destx2-destx3 != 0 && desty2-desty3 != 0) {
+									int[] xco = {destx2, destx2, destx3, destx3};
+									int[] yco = {desty2, desty, desty3, desty3+48};
+									drawImage3D(xco, yco, xc, yc, texdark, drawblack);
+								}
+							}
+							else {
+								destx2 = destx + size;
+								desty2 = desty + (size*(r+1));
+								destx3 = ((xc+1)*48) + (w/2-(int)p.x);
+								desty3 = (yc*48) + (h/2-(int)p.y);
+								if (destx2-destx3 != 0 && desty2-desty3 != 0) {
+									int[] xco = {destx2, destx2, destx3, destx3};
+									int[] yco = {desty2, desty, desty3, desty3+(48*(r+1))};
+									drawWalls3D(xco, yco, xc, yc, r, texdark);
+								}
+							}
+							drawn[yc][xc] += 1;
 						}
 					}
 					if (xc-1 >= minx && map[yc][xc-1] < 120 && map[yc][xc-1] != -1 && p.x < xc*48) {
-						destx2 = destx;
-						desty2 = desty + size;
-						destx3 = (xc*48) + (w/2-(int)p.x);
-						desty3 = (yc*48) + (h/2-(int)p.y);
-						boolean drawblack = false;
-						if (map[yc][xc] == -1)
-							drawblack = true;
-						if (destx2-destx3 != 0 && desty2-desty3 != 0) {
-							int[] xco = {destx2, destx2, destx3, destx3};
-							int[] yco = {desty2, desty2-size, desty3, desty3+48};
-							drawImage3D(xco, yco, xc, yc, tex, drawblack);
+						if (((drawn[yc][xc]%8)%4)/2 != 1) {
+							boolean a = true;
+							int r = 1;
+							while(a) {
+								if (yc+r <= maxy && (map[yc+r][xc] >= 120 || map[yc+r][xc] == -1) && map[yc+r][xc-1] < 120 && map[yc+r][xc-1] != -1) {
+									drawn[yc+r][xc] += 2;
+									r += 1;
+								}
+								else {
+									r -= 1;
+									a = false;
+								}
+							}
+							
+							if (r == 0) {
+								destx2 = destx;
+								desty2 = desty + size;
+								destx3 = (xc*48) + (w/2-(int)p.x);
+								desty3 = (yc*48) + (h/2-(int)p.y);
+								boolean drawblack = false;
+								if (map[yc][xc] == -1)
+									drawblack = true;
+								if (destx2-destx3 != 0 && desty2-desty3 != 0) {
+									int[] xco = {destx2, destx2, destx3, destx3};
+									int[] yco = {desty2, desty, desty3, desty3+48};
+									drawImage3D(xco, yco, xc, yc, tex, drawblack);
+								}
+							}
+							else {
+								
+								destx2 = destx;
+								desty2 = desty + (size*(r+1));
+								destx3 = (xc*48) + (w/2-(int)p.x);
+								desty3 = (yc*48) + (h/2-(int)p.y);
+								if (destx2-destx3 != 0 && desty2-desty3 != 0) {
+									int[] xco = {destx2, destx2, destx3, destx3};
+									int[] yco = {desty2, desty, desty3, desty3+(48*(r+1))};
+									drawWalls3D(xco, yco, xc, yc, r, texdark);
+								}
+							}
+							drawn[yc][xc] += 2;
 						}
 					}
 					if (yc+1 <= maxy && map[yc+1][xc] < 120 && map[yc+1][xc] != -1 && p.y > (yc+1)*48+1) {
-						destx2 = destx + size;
-						desty2 = desty + size;
-						destx3 = (xc*48) + (w/2-(int)p.x);
-						desty3 = ((yc+1)*48) + (h/2-(int)p.y);
-						boolean drawblack = false;
-						if (map[yc][xc] == -1)
-							drawblack = true;
-						if (destx2-destx3 != 0 && desty2-desty3 != 0) {
-							int[] xco = {destx2-size, destx2, destx3+48, destx3};
-							int[] yco = {desty2, desty2, desty3, desty3};
-							drawImage3D(xco, yco, xc, yc, texdark, drawblack);
+						if ((drawn[yc][xc]%8)/4 != 1) {
+							boolean a = true;
+							int r = 1;
+							while(a) {
+								if (xc+r <= maxx && (map[yc][xc+r] >= 120 || map[yc][xc+r] == -1) && map[yc+1][xc+r] < 120 && map[yc+1][xc+r] != -1) {
+									drawn[yc][xc+r] += 4;
+									r += 1;
+								}
+								else {
+									r -= 1;
+									a = false;
+								}
+							}
+							
+							if (r == 0) {
+								destx2 = destx + size;
+								desty2 = desty + size;
+								destx3 = (xc*48) + (w/2-(int)p.x);
+								desty3 = ((yc+1)*48) + (h/2-(int)p.y);
+								boolean drawblack = false;
+								if (map[yc][xc] == -1)
+									drawblack = true;
+								if (destx2-destx3 != 0 && desty2-desty3 != 0) {
+									int[] xco = {destx, destx2, destx3+48, destx3};
+									int[] yco = {desty2, desty2, desty3, desty3};
+									drawImage3D(xco, yco, xc, yc, texdark, drawblack);
+								}
+							}
+							else {
+								destx2 = destx + (size*(r+1));
+								desty2 = desty + size;
+								destx3 = (xc*48) + (w/2-(int)p.x);
+								desty3 = ((yc+1)*48) + (h/2-(int)p.y);
+								if (destx2-destx3 != 0 && desty2-desty3 != 0) {
+									int[] xco = {destx, destx2, destx3+(48*(r+1)), destx3};
+									int[] yco = {desty2, desty2, desty3, desty3};
+									drawWalls3D(xco, yco, xc, yc, r, texdark);
+								}
+							}
+							drawn[yc][xc] += 4;
 						}
 					}
 					if (yc-1 >= miny && map[yc-1][xc] < 120 && map[yc-1][xc] != -1 && p.y < yc*48) {
-						destx2 = destx + size;
-						desty2 = desty;
-						destx3 = (xc*48) + (w/2-(int)p.x);
-						desty3 = (yc*48) + (h/2-(int)p.y);
-						boolean drawblack = false;
-						if (map[yc][xc] == -1)
-							drawblack = true;
-						if (destx2-destx3 != 0 && desty2-desty3 != 0) {
-							int[] xco = {destx2, destx2-size, destx3, destx3+48};
-							int[] yco = {desty2, desty2, desty3, desty3};
-							drawImage3D(xco, yco, xc, yc, tex, drawblack);
+						if (drawn[yc][xc]/8 != 1) {
+							boolean a = true;
+							int r = 1;
+							while(a) {
+								if (xc+r <= maxx && (map[yc][xc+r] >= 120 || map[yc][xc+r] == -1) && map[yc-1][xc+r] < 120 && map[yc-1][xc+r] != -1) {
+									drawn[yc][xc+r] += 8;
+									r += 1;
+								}
+								else {
+									r -= 1;
+									a = false;
+								}
+							}
+							
+							if (r == 0) {
+								destx2 = destx + size;
+								desty2 = desty;
+								destx3 = (xc*48) + (w/2-(int)p.x);
+								desty3 = (yc*48) + (h/2-(int)p.y);
+								boolean drawblack = false;
+								if (map[yc][xc] == -1)
+									drawblack = true;
+								if (destx2-destx3 != 0 && desty2-desty3 != 0) {
+									int[] xco = {destx2, destx, destx3, destx3+48};
+									int[] yco = {desty2, desty2, desty3, desty3};
+									drawImage3D(xco, yco, xc, yc, tex, drawblack);
+								}
+							}
+							else {
+								destx2 = destx + (size*(r+1));
+								desty2 = desty;
+								destx3 = (xc*48) + (w/2-(int)p.x);
+								desty3 = (yc*48) + (h/2-(int)p.y);
+								if (destx2-destx3 != 0 && desty2-desty3 != 0) {
+									int[] xco = {destx2, destx, destx3, destx3+(48*(r+1))};
+									int[] yco = {desty2, desty2, desty3, desty3};
+									drawWalls3D(xco, yco, xc, yc, r, texdark);
+								}
+							}
+							drawn[yc][xc] += 8;
 						}
 					}
+					drawn[yc][xc] = 15;
 				}
 			}
 		}
@@ -782,9 +907,35 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 			((Graphics2D)dbImage.getGraphics()).drawRenderedImage(renOp, new AffineTransform());
 		}
 		else {
-			g2.setColor(Color.black);
-			((Graphics2D)dbImage.getGraphics()).fillPolygon(x, y, 4);
+			Graphics g2d = ((Graphics2D)dbImage.getGraphics());
+			g2d.setColor(Color.black);
+			g2d.fillPolygon(x, y, 4);
 		}
+	}
+	
+	public final void drawWalls3D(int[] x, int[] y, int xc, int yc, int num, Image a) { //multiple 3D walls with JAI
+	/*	BufferedImage temptex = new BufferedImage(48, 48, BufferedImage.TYPE_INT_ARGB_PRE);
+		//loop here, with variables for additions
+		temptex.getGraphics().drawImage(a, 0, 0, 48, 48, (map[yc][xc]%10)*48, (map[yc][xc]/10)*48, (map[yc][xc]%10)*48+48, (map[yc][xc]/10)*48+48, this);
+		
+		PerspectiveTransform ptran = PerspectiveTransform.getQuadToQuad(0, 0, 48, 0, 48, 48, 0, 48,	x[0], y[0], x[1], y[1], x[2], y[2], x[3], y[3]);
+		
+		ParameterBlock pb = (new ParameterBlock()).addSource(temptex);
+		try {
+			pb.add(new WarpPerspective(ptran.createInverse()));
+		//	pb.add(Interpolation.getInstance(Interpolation.INTERP_BILINEAR)); //antialiasing - leaves 'open' lines between textures
+		}
+		catch (Exception e) { e.printStackTrace(); }
+		
+		RenderedOp renOp = JAI.create("warp", pb);
+		
+		((Graphics2D)dbImage.getGraphics()).drawRenderedImage(renOp, new AffineTransform()); */
+		
+		Graphics g2d = ((Graphics2D)dbImage.getGraphics());
+		g2d.setColor(Color.black);
+		g2d.fillPolygon(x, y, 4);
+		g2d.setColor(Color.red);
+		g2d.drawPolygon(x, y, 4);
 	}
 	
 	public final void drawPlayer(Graphics g2) {
