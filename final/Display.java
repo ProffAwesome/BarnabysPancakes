@@ -668,7 +668,7 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 		int destx, desty, destx2, desty2, destx3, desty3;
 		for (int yc = miny; yc <= maxy; yc++) {
 			for (int xc = minx; xc <= maxx; xc++) {
-				if (map[yc][xc] >= 120 || map[yc][xc] == -1) {
+				if (map[yc][xc] >= 120 || map[yc][xc] == -1) { //TODO: optimise wall drawing -- draw an entire wall at once
 					destx = (int)Math.round((xc*size) + xpo);
 					desty = (int)Math.round((yc*size) + ypo);
 					if (xc+1 <= maxx && map[yc][xc+1] < 120 && map[yc][xc+1] != -1 && p.x > (xc+1)*48+1) {

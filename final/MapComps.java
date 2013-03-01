@@ -13,8 +13,9 @@ public class MapComps extends JPanel implements ActionListener/*, MenuElement*/ 
 	
 	File loadfile = null;
 	public static JMenuBar menubar = new JMenuBar();
-	JMenu file;
-	JMenuItem newmap, load, loadold, save, saveas, exit, mapsize, replace, diag, zoomin, zoomout, delete;
+	JMenu file, options;
+	JMenuItem newmap, load, loadold, save, saveas, exit, opUp, mapsize, replace, diag, zoomin, zoomout, delete;
+	JCheckBox draw3d;
 	JFileChooser fc = new JFileChooser(); //file chooser window
 	
 	boolean read = false; //if data is read
@@ -33,6 +34,8 @@ public class MapComps extends JPanel implements ActionListener/*, MenuElement*/ 
 	
 	public void makeMenu() {
 		file = new JMenu("File");
+		options = new JMenu("Options");
+		
 		
 		newmap = new JMenuItem("New Map");
 		load = new JMenuItem("Load Map");
@@ -40,12 +43,18 @@ public class MapComps extends JPanel implements ActionListener/*, MenuElement*/ 
 		save = new JMenuItem("Save Map");
 		saveas = new JMenuItem("Save Map As");
 		exit = new JMenuItem("Exit");
+		
+		draw3d = new JCheckBox("Draw 3D Walls");
+		draw3d.setSelected(false);
+		opUp = new JMenuItem("Update Options");
+		
 		mapsize = new JMenuItem("Reize Map");
 		replace = new JMenuItem("Replace Tiles");
 		diag = new JMenuItem("Diagonal Line");
 		zoomin = new JMenuItem("Zoom In");
 		zoomout = new JMenuItem("Zoom Out");
 		delete = new JMenuItem("Delete Tiles");
+		
 		
 		file.add(newmap);
 		file.add(load);
@@ -54,7 +63,11 @@ public class MapComps extends JPanel implements ActionListener/*, MenuElement*/ 
 		file.add(saveas);
 		file.add(exit);
 		
+		options.add(draw3d);
+		options.add(opUp);
+		
 		menubar.add(file);
+		menubar.add(options);
 		menubar.add(mapsize);
 		menubar.add(replace);
 		menubar.add(diag);
@@ -62,12 +75,14 @@ public class MapComps extends JPanel implements ActionListener/*, MenuElement*/ 
 		menubar.add(zoomout);
 		menubar.add(delete);
 		
+		
 		newmap.addActionListener(this);
 		load.addActionListener(this);
 		loadold.addActionListener(this);
 		save.addActionListener(this);
 		saveas.addActionListener(this);
 		exit.addActionListener(this);
+		opUp.addActionListener(this);
 		mapsize.addActionListener(this);
 		replace.addActionListener(this);
 		diag.addActionListener(this);
@@ -277,6 +292,11 @@ public class MapComps extends JPanel implements ActionListener/*, MenuElement*/ 
 		else if (avt.getSource() == exit) {
 			MapCreator.close();
 		}
+		
+		if (draw3d.isSelected())
+			display.draw3d = true;
+		else
+			display.draw3d = false;
 	} //end actionPerformed()
 	
 	/**

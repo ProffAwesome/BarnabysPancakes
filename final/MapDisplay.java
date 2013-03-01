@@ -1,8 +1,12 @@
 import java.applet.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.geom.AffineTransform;
+import java.awt.image.BufferedImage;
+import java.awt.image.renderable.ParameterBlock;
 import java.io.*;
 import javax.imageio.*;
+import javax.media.jai.*;
 import javax.swing.JOptionPane;
 
 //TODO:
@@ -27,11 +31,18 @@ public class MapDisplay extends Applet implements MouseListener, MouseMotionList
 	public static boolean mapin = false;
 	public static boolean delete = false;
 	public static boolean drawDiag = false;
+	boolean draw3d = false;
 	boolean first = true;
-	Image tex, sel, plytile, playsel, tileset;
+	Image tex, texdark, sel, plytile, playsel, tileset;
 	Image dbImage;
+	BufferedImage mapfront;
 	Graphics g2;
 	public static int playerSpawnNum = 0;
+	
+	/**
+	 * this gets rid of exception for not using native acceleration
+	 */
+	static { System.setProperty("com.sun.media.jai.disableMediaLib", "true"); }
 	
 	/**
 	 * Initialises variables.
@@ -54,6 +65,7 @@ public class MapDisplay extends Applet implements MouseListener, MouseMotionList
 		addMouseMotionListener(this);
 		try { //load all images
 			tex = ImageIO.read(getClass().getResource("gfx/textures.png"));
+			texdark = ImageIO.read(getClass().getResource("gfx/texturesdark.png"));
 			sel = ImageIO.read(getClass().getResource("gfx/tileselected.png"));
 			plytile = ImageIO.read(getClass().getResource("gfx/player_entity_tiles.png"));
 			playsel = ImageIO.read(getClass().getResource("gfx/playerselected.png"));
@@ -224,8 +236,6 @@ public class MapDisplay extends Applet implements MouseListener, MouseMotionList
 	}
 	
 	public static final void saveMap(File filename) {
-		//TODO: check that everything's good --> playerx/y, etc.
-		//TODO: pop up dialog box if checks not successful
 		if (playerSpawnNum > 0) {
 			try {
 				PrintWriter outputfile = new PrintWriter(new BufferedWriter(new FileWriter(filename)));
@@ -375,7 +385,7 @@ public class MapDisplay extends Applet implements MouseListener, MouseMotionList
 		catch (Exception e){	System.out.println("Corrupt map file (#102)\n" + e); return null;	}
 	}
 	
-	public void drawMap(Graphics g2) {
+	public int[] drawMap(Graphics g2) {
 		//	Graphics g2 = getGraphics();
 		if (mapin) {
 			int minx = 0, miny = 0, maxx = mapw-1, maxy = maph-1;
@@ -390,7 +400,7 @@ public class MapDisplay extends Applet implements MouseListener, MouseMotionList
 				miny = (0-py)/(48/zoom)-1;
 			
 			maxx = minx + w/(48/zoom)+1;
-			maxy = miny + h/(48/zoom)+1;
+			maxy = miny + h/(48/zoom)+2;
 			
 			if (maxx >= mapw)
 				maxx = mapw-1;
@@ -428,6 +438,8 @@ public class MapDisplay extends Applet implements MouseListener, MouseMotionList
 				g2.fillRect((playerx*48+8)/zoom+px, (playery*48+8)/zoom+py, 32/zoom, 32/zoom);
 				//TODO: draw player graphic
 			}
+			int[] mmxy = {minx, miny, maxx, maxy};
+			return mmxy;
 		}
 		else {
 			int s = w-181;
@@ -435,6 +447,7 @@ public class MapDisplay extends Applet implements MouseListener, MouseMotionList
 			g2.fillRect(0, 0, s-1, h-1);
 			g2.setColor(Color.red);
 			g2.drawRect(0, 0, s-1, h-1);
+			return null;
 		}
 	}
 	
@@ -475,7 +488,10 @@ public class MapDisplay extends Applet implements MouseListener, MouseMotionList
 		Graphics g = getGraphics();
 		dbImage = createImage(w, h);
 		g2 = dbImage.getGraphics();
-		drawMap(g2);
+		int[] mmxy; //0minx, 1miny, 2maxx, 3maxy
+		mmxy = drawMap(g2);
+		if (mapin && draw3d)
+			drawMap3D(g2, mmxy);
 		drawTile(g2);
 		g.drawImage(dbImage, 0, 0, this);
 	}
@@ -483,4 +499,121 @@ public class MapDisplay extends Applet implements MouseListener, MouseMotionList
 	public final void paint(Graphics g) {
 		draw();
 	} //end paint()
+	
+	public final void drawMap3D(Graphics g2, int[] mmxy) {
+		int minx = mmxy[0], miny = mmxy[1], maxx = mmxy[2], maxy = mmxy[3];
+		int plx = -px + (w-181)/2;
+		int ply = -py + h/2;
+		int size = 54/zoom;
+		double xpo = ((w-181)/2-plx) - plx/((48/zoom)/(size-(48/zoom)));
+		double ypo = (h/2-ply) - ply/((48/zoom)/(size-(48/zoom)));
+		int destx, desty, destx2, desty2, destx3, desty3;
+		for (int yc = miny; yc <= maxy; yc++) {
+			for (int xc = minx; xc <= maxx; xc++) {
+				if (map[yc][xc] >= 120 || map[yc][xc] == -1) {
+					destx = (int)Math.round((xc*size) + xpo);
+					desty = (int)Math.round((yc*size) + ypo);
+					if (xc+1 <= maxx && map[yc][xc+1] < 120 && map[yc][xc+1] != -1 && plx > (xc+1)*(48/zoom)+1) {
+						destx2 = destx + size;
+						desty2 = desty + size;
+						destx3 = ((xc+1)*(48/zoom)) + ((w-181)/2-(int)plx);
+						desty3 = (yc*(48/zoom)) + (h/2-(int)ply);
+						boolean drawblack = false;
+						if (map[yc][xc] == -1)
+							drawblack = true;
+						if (destx2-destx3 != 0 && desty2-desty3 != 0) {
+							int[] xco = {destx2, destx2, destx3, destx3};
+							int[] yco = {desty2, desty2-size, desty3, desty3+(48/zoom)};
+							drawImage3D(xco, yco, xc, yc, texdark, drawblack);
+						}
+					}
+					if (xc-1 >= minx && map[yc][xc-1] < 120 && map[yc][xc-1] != -1 && plx < xc*(48/zoom)) {
+						destx2 = destx;
+						desty2 = desty + size;
+						destx3 = (xc*(48/zoom)) + ((w-181)/2-(int)plx);
+						desty3 = (yc*(48/zoom)) + (h/2-(int)ply);
+						boolean drawblack = false;
+						if (map[yc][xc] == -1)
+							drawblack = true;
+						if (destx2-destx3 != 0 && desty2-desty3 != 0) {
+							int[] xco = {destx2, destx2, destx3, destx3};
+							int[] yco = {desty2, desty2-size, desty3, desty3+(48/zoom)};
+							drawImage3D(xco, yco, xc, yc, tex, drawblack);
+						}
+					}
+					if (yc+1 <= maxy && map[yc+1][xc] < 120 && map[yc+1][xc] != -1 && ply > (yc+1)*(48/zoom)+1) {
+						destx2 = destx + size;
+						desty2 = desty + size;
+						destx3 = (xc*(48/zoom)) + ((w-181)/2-(int)plx);
+						desty3 = ((yc+1)*(48/zoom)) + (h/2-(int)ply);
+						boolean drawblack = false;
+						if (map[yc][xc] == -1)
+							drawblack = true;
+						if (destx2-destx3 != 0 && desty2-desty3 != 0) {
+							int[] xco = {destx2-size, destx2, destx3+(48/zoom), destx3};
+							int[] yco = {desty2, desty2, desty3, desty3};
+							drawImage3D(xco, yco, xc, yc, texdark, drawblack);
+						}
+					}
+					if (yc-1 >= miny && map[yc-1][xc] < 120 && map[yc-1][xc] != -1 && ply < yc*(48/zoom)) {
+						destx2 = destx + size;
+						desty2 = desty;
+						destx3 = (xc*(48/zoom)) + ((w-181)/2-(int)plx);
+						desty3 = (yc*(48/zoom)) + (h/2-(int)ply);
+						boolean drawblack = false;
+						if (map[yc][xc] == -1)
+							drawblack = true;
+						if (destx2-destx3 != 0 && desty2-desty3 != 0) {
+							int[] xco = {destx2, destx2-size, destx3, destx3+(48/zoom)};
+							int[] yco = {desty2, desty2, desty3, desty3};
+							drawImage3D(xco, yco, xc, yc, tex, drawblack);
+						}
+					}
+				}
+			}
+		}
+		mapfront = new BufferedImage(mapw*size, maph*size, BufferedImage.TYPE_INT_ARGB_PRE);
+		Graphics2D g3d = (Graphics2D)mapfront.getGraphics();
+		g3d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+		for (int yc = 0; yc <= maph-1; yc++) {
+			for (int xc = 0; xc <= mapw-1; xc++) {
+				destx = xc*size;
+				desty = yc*size;
+				if (map[yc][xc] == -1) {
+					g3d.setColor(Color.black);
+					g3d.fillRect(destx, desty, size, size);
+				}
+				else if (map[yc][xc] >= 120) {
+					int sourcex = (map[yc][xc]%10)*48;
+					int sourcey = (map[yc][xc]/10)*48;
+					g3d.drawImage(tex, destx, desty, destx+size, desty+size, sourcex, sourcey, sourcex+48, sourcey+48, this);
+				}
+			}
+		}
+		g2.drawImage(mapfront, (int)Math.round(xpo), (int)Math.round(ypo), this);
+	}
+	
+	public final void drawImage3D(int[] x, int[] y, int xc, int yc, Image a, boolean drawblack) { //3D walls with JAI
+		if (!drawblack) {
+			BufferedImage temptex = new BufferedImage(48, 48, BufferedImage.TYPE_INT_ARGB_PRE);
+			temptex.getGraphics().drawImage(a, 0, 0, 48, 48, (map[yc][xc]%10)*48, (map[yc][xc]/10)*48, (map[yc][xc]%10)*48+48, (map[yc][xc]/10)*48+48, this);
+			
+			PerspectiveTransform ptran = PerspectiveTransform.getQuadToQuad(0, 0, 48, 0, 48, 48, 0, 48,	x[0], y[0], x[1], y[1], x[2], y[2], x[3], y[3]);
+			
+			ParameterBlock pb = (new ParameterBlock()).addSource(temptex);
+			try {
+				pb.add(new WarpPerspective(ptran.createInverse()));
+			//	pb.add(Interpolation.getInstance(Interpolation.INTERP_BILINEAR)); //antialiasing - leaves 'open' lines between textures
+			}
+			catch (Exception e) { e.printStackTrace(); }
+			
+			RenderedOp renOp = JAI.create("warp", pb);
+			
+			((Graphics2D)dbImage.getGraphics()).drawRenderedImage(renOp, new AffineTransform());
+		}
+		else {
+			g2.setColor(Color.black);
+			((Graphics2D)dbImage.getGraphics()).fillPolygon(x, y, 4);
+		}
+	}
 } //end class Display
