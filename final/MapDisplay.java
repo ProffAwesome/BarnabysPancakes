@@ -33,7 +33,7 @@ public class MapDisplay extends Applet implements MouseListener, MouseMotionList
 	public static boolean drawDiag = false;
 	boolean draw3d = false;
 	boolean first = true;
-	Image tex, texdark, sel, plytile, playsel, tileset;
+	Image tex, texdark, sel, tileset;
 	Image dbImage;
 	BufferedImage mapfront;
 	Graphics g2;
@@ -67,8 +67,6 @@ public class MapDisplay extends Applet implements MouseListener, MouseMotionList
 			tex = ImageIO.read(getClass().getResource("gfx/textures.png"));
 			texdark = ImageIO.read(getClass().getResource("gfx/texturesdark.png"));
 			sel = ImageIO.read(getClass().getResource("gfx/tileselected.png"));
-			plytile = ImageIO.read(getClass().getResource("gfx/player_entity_tiles.png"));
-			playsel = ImageIO.read(getClass().getResource("gfx/playerselected.png"));
 		}
 		catch(Exception e) { e.printStackTrace(); }
 		
@@ -114,17 +112,21 @@ public class MapDisplay extends Applet implements MouseListener, MouseMotionList
 		e.consume();
 	}
 	
-	public void clickComm(MouseEvent e) {
+	public void clickComm(MouseEvent e) { //TODO: delete entity/warp/player?
 		if (mx > w-181 && my < 469) { //if in the tile selection
 			selected[0] = (mx-(w-182))/18;
 			selected[1] = (my+1)/18;
 			if (selected[0] > 4 && selected[1] == 25) {
-				if ((mx-(w-182))/9 > 9 && (mx-(w-182))/9 < 15)
-					selected[0] = 32;
-			/*	else if ((mx-(w-182))/9 > 14 && (mx-(w-182))/9 < 21) {
-					//selected[0] = 64;
-					//TODO: entity popup and choice
-				}*/
+				if (selected[0] == 5) { //player
+					selected[0] = 101;
+				//TODO: trigger popup for player number -- have "new player", and "player #X" to edit
+				}
+				else if (selected[0] == 6) //warp
+					selected[0] = 102;
+				else if (selected[0] == 7) { //entity
+					selected[0] = 103;
+					//TODO: trigger popup to select entity
+				}
 			}
 			if (selected[1] > 25)
 				selected[1] = 25;
@@ -132,19 +134,20 @@ public class MapDisplay extends Applet implements MouseListener, MouseMotionList
 			draw();
 		}
 		else if (mapin && mx < w-181 && selected[0] != -1 && selected[1] != -1 && (my-py)/(48/zoom) >= 0 && (my-py)/(48/zoom) < maph && (mx-px)/(48/zoom) >= 0 && (mx-px)/(48/zoom) < mapw) { //if in the map viewer
-			if (selected[0] == 32) {
+			if (selected[0] == 101) { //player
 				playerx = (mx-px)/(48/zoom);
 				playery = (my-py)/(48/zoom);
 				if (playerSpawnNum == 0)
 					playerSpawnNum = 1;
 			}
+			else if (selected[0] == 102) { } //warps
+			else if (selected[0] == 103) { } //entity
 			else if (e.getButton() == MouseEvent.BUTTON1) {
 				int tile = selected[0] + selected[1]*10;
 				if (delete)
 					tile = -1;
 				map[(my-py)/(48/zoom)][(mx-px)/(48/zoom)] = tile;
-				System.out.println((mx-px)/(48/zoom) + "x y" + (my-py)/(48/zoom));
-			//	System.out.println((((my-py)/48)/zoom) + " " + (((mx-px)/48)/zoom));
+			//	System.out.println((mx-px)/(48/zoom) + "x y" + (my-py)/(48/zoom));
 			}
 			else if (e.getButton() == MouseEvent.BUTTON3) {
 				int tx = (mx-px)/(48/zoom);
@@ -433,10 +436,11 @@ public class MapDisplay extends Applet implements MouseListener, MouseMotionList
 				g2.drawRect(((box[0]*48)/zoom+px)+2, ((box[1]*48)/zoom+py)+2, 48/zoom-4, 48/zoom-4);
 			}
 			if (playerx != -1 && playery != -1) { //player position
-				g2.setColor(Color.green);
-				g2.drawRect((playerx*48)/zoom+px, (playery*48)/zoom+py, 48/zoom-1, 48/zoom-1);
-				g2.fillRect((playerx*48+8)/zoom+px, (playery*48+8)/zoom+py, 32/zoom, 32/zoom);
-				//TODO: draw player graphic
+				sourcex = 240;
+				sourcey = 1200;
+				destx = (playerx*48)/zoom+px;
+				desty = (playery*48)/zoom+py;
+				g2.drawImage(tex, destx, desty, destx+(48/zoom), desty+(48/zoom), sourcex, sourcey, sourcex+48, sourcey+48, this);
 			}
 			int[] mmxy = {minx, miny, maxx, maxy};
 			return mmxy;
@@ -468,18 +472,20 @@ public class MapDisplay extends Applet implements MouseListener, MouseMotionList
 					sourcey = y*48;
 					destx = (x*18)+1;
 					desty = (y*18)+1;
-					if (x < 5 || y != 25)
+					if (x < 8 || y != 25)
 						g3.drawImage(tex, destx, desty, destx+17, desty+17, sourcex, sourcey, sourcex+48, sourcey+48, this);
-					else if (x == 5 && y == 25)
-						g3.drawImage(plytile, destx, desty, 89, 17, this);
 				}
 			}
 			first = false;
 		}
 		g2.drawImage(tileset, s, 0, this);
 		
-		if (selected[0] == 32)
-			g2.drawImage(playsel, 90+s, 450, this);
+		if (selected[0] == 101) //player
+			g2.drawImage(sel, 90+s, 450, this);
+		else if (selected[0] == 102) //warp
+			g2.drawImage(sel, 108+s, 450, this);
+		else if (selected[0] == 103) //entity
+			g2.drawImage(sel, 126+s, 450, this);
 		else if (selected[0] != -1 && selected[1] != -1)
 			g2.drawImage(sel, (selected[0]*18)+s, (selected[1]*18), this);
 	}

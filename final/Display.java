@@ -1,4 +1,3 @@
-//add multiple player spawns
 //-Xmx1G -Xms1G
 
 import java.applet.*;
@@ -11,6 +10,9 @@ import java.io.*;
 import java.net.URL;
 import javax.imageio.*;
 import javax.media.jai.*;
+
+//TODO: draw warps
+//add stamina for sprinting?
 
 public class Display extends Applet implements MouseListener, MouseMotionListener, KeyListener {
 	private static final long serialVersionUID = 1L;
@@ -638,7 +640,7 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 		return fade;
 	}
 	
-	public final void drawMap3D(Graphics g2) {
+	public final void drawMap3D(Graphics g2) { //TODO: (draw black walls with textures beside -1), don't draw black square on top layer
 		short[][] drawn = new short[maph][mapw];
 		for (int yc = 0; yc < maph; yc++) {
 			for (int xc = 0; xc < mapw; xc++) {
@@ -675,31 +677,31 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 		int destx, desty, destx2, desty2, destx3, desty3;
 		for (int yc = miny; yc <= maxy; yc++) {
 			for (int xc = minx; xc <= maxx; xc++) {
-				if (map[yc][xc] >= 120 || map[yc][xc] == -1) { //TODO: optimise wall drawing -- draw an entire wall at once
+				if (map[yc][xc] >= 120) {
 					destx = (int)Math.round((xc*size) + xpo);
 					desty = (int)Math.round((yc*size) + ypo);
-					if (xc+1 <= maxx && map[yc][xc+1] < 120 && map[yc][xc+1] != -1 && p.x > (xc+1)*48+1) {
+					if (xc+1 <= maxx && map[yc][xc+1] < 120 && p.x > (xc+1)*48+1) {
 						if (((drawn[yc][xc]%8)%4)%2 != 1) {
 							boolean a = true;
 							int r = 1;
-							while(a) {
-								if (yc+r <= maxy && (map[yc+r][xc] >= 120 || map[yc+r][xc] == -1) && map[yc+r][xc+1] < 120 && map[yc+r][xc+1] != -1) {
-									drawn[yc+r][xc] += 1;
-									r += 1;
-								}
-								else {
-									r -= 1;
-									a = false;
+							if (map[yc][xc+1] != -1) {
+								while(a) {
+									if (yc+r <= maxy && map[yc+r][xc] >= 120 && map[yc+r][xc+1] < 120 && map[yc+r][xc+1] != -1) {
+										drawn[yc+r][xc] += 1;
+										r += 1;
+									}
+									else
+										a = false;
 								}
 							}
 							
-							if (r == 0) {
+							if (r < 2) {
 								destx2 = destx + size;
 								desty2 = desty + size;
 								destx3 = ((xc+1)*48) + (w/2-(int)p.x);
 								desty3 = (yc*48) + (h/2-(int)p.y);
 								boolean drawblack = false;
-								if (map[yc][xc] == -1)
+								if (map[yc][xc+1] == -1)
 									drawblack = true;
 								if (destx2-destx3 != 0 && desty2-desty3 != 0) {
 									int[] xco = {destx2, destx2, destx3, destx3};
@@ -709,84 +711,83 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 							}
 							else {
 								destx2 = destx + size;
-								desty2 = desty + (size*(r+1));
+								desty2 = desty + (size*r);
 								destx3 = ((xc+1)*48) + (w/2-(int)p.x);
 								desty3 = (yc*48) + (h/2-(int)p.y);
 								if (destx2-destx3 != 0 && desty2-desty3 != 0) {
 									int[] xco = {destx2, destx2, destx3, destx3};
-									int[] yco = {desty2, desty, desty3, desty3+(48*(r+1))};
-									drawWalls3D(xco, yco, xc, yc, r, texdark);
+									int[] yco = {desty2, desty, desty3, desty3+(48*r)};
+									drawWalls3D(xco, yco, xc, yc, r, texdark, false);
 								}
 							}
 							drawn[yc][xc] += 1;
 						}
 					}
-					if (xc-1 >= minx && map[yc][xc-1] < 120 && map[yc][xc-1] != -1 && p.x < xc*48) {
+					if (xc-1 >= minx && map[yc][xc-1] < 120 && p.x < xc*48) {
 						if (((drawn[yc][xc]%8)%4)/2 != 1) {
 							boolean a = true;
 							int r = 1;
-							while(a) {
-								if (yc+r <= maxy && (map[yc+r][xc] >= 120 || map[yc+r][xc] == -1) && map[yc+r][xc-1] < 120 && map[yc+r][xc-1] != -1) {
-									drawn[yc+r][xc] += 2;
-									r += 1;
-								}
-								else {
-									r -= 1;
-									a = false;
+							if (map[yc][xc-1] != -1) {
+								while(a) {
+									if (yc+r <= maxy && map[yc+r][xc] >= 120 && map[yc+r][xc-1] < 120 && map[yc+r][xc-1] != -1) {
+										drawn[yc+r][xc] += 2;
+										r += 1;
+									}
+									else
+										a = false;
 								}
 							}
 							
-							if (r == 0) {
+							if (r < 2) {
 								destx2 = destx;
 								desty2 = desty + size;
 								destx3 = (xc*48) + (w/2-(int)p.x);
 								desty3 = (yc*48) + (h/2-(int)p.y);
 								boolean drawblack = false;
-								if (map[yc][xc] == -1)
+								if (map[yc][xc-1] == -1)
 									drawblack = true;
 								if (destx2-destx3 != 0 && desty2-desty3 != 0) {
 									int[] xco = {destx2, destx2, destx3, destx3};
 									int[] yco = {desty2, desty, desty3, desty3+48};
-									drawImage3D(xco, yco, xc, yc, tex, drawblack);
+									drawImage3D(xco, yco, xc, yc, texdark, drawblack);//tex, drawblack);
 								}
 							}
 							else {
-								
 								destx2 = destx;
-								desty2 = desty + (size*(r+1));
+								desty2 = desty + (size*r);
 								destx3 = (xc*48) + (w/2-(int)p.x);
 								desty3 = (yc*48) + (h/2-(int)p.y);
 								if (destx2-destx3 != 0 && desty2-desty3 != 0) {
 									int[] xco = {destx2, destx2, destx3, destx3};
-									int[] yco = {desty2, desty, desty3, desty3+(48*(r+1))};
-									drawWalls3D(xco, yco, xc, yc, r, texdark);
+									int[] yco = {desty2, desty, desty3, desty3+(48*r)};
+									drawWalls3D(xco, yco, xc, yc, r, texdark, false);
 								}
 							}
 							drawn[yc][xc] += 2;
 						}
 					}
-					if (yc+1 <= maxy && map[yc+1][xc] < 120 && map[yc+1][xc] != -1 && p.y > (yc+1)*48+1) {
+					if (yc+1 <= maxy && map[yc+1][xc] < 120 && p.y > (yc+1)*48+1) {
 						if ((drawn[yc][xc]%8)/4 != 1) {
 							boolean a = true;
 							int r = 1;
-							while(a) {
-								if (xc+r <= maxx && (map[yc][xc+r] >= 120 || map[yc][xc+r] == -1) && map[yc+1][xc+r] < 120 && map[yc+1][xc+r] != -1) {
-									drawn[yc][xc+r] += 4;
-									r += 1;
-								}
-								else {
-									r -= 1;
-									a = false;
+								if (map[yc+1][xc] != -1) {
+								while(a) {
+									if (xc+r <= maxx && map[yc][xc+r] >= 120 && map[yc+1][xc+r] < 120 && map[yc+1][xc+r] != -1) {
+										drawn[yc][xc+r] += 4;
+										r += 1;
+									}
+									else
+										a = false;
 								}
 							}
 							
-							if (r == 0) {
+							if (r < 2) {
 								destx2 = destx + size;
 								desty2 = desty + size;
 								destx3 = (xc*48) + (w/2-(int)p.x);
 								desty3 = ((yc+1)*48) + (h/2-(int)p.y);
 								boolean drawblack = false;
-								if (map[yc][xc] == -1)
+								if (map[yc+1][xc] == -1)
 									drawblack = true;
 								if (destx2-destx3 != 0 && desty2-desty3 != 0) {
 									int[] xco = {destx, destx2, destx3+48, destx3};
@@ -795,57 +796,57 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 								}
 							}
 							else {
-								destx2 = destx + (size*(r+1));
+								destx2 = destx + (size*r);
 								desty2 = desty + size;
 								destx3 = (xc*48) + (w/2-(int)p.x);
 								desty3 = ((yc+1)*48) + (h/2-(int)p.y);
 								if (destx2-destx3 != 0 && desty2-desty3 != 0) {
-									int[] xco = {destx, destx2, destx3+(48*(r+1)), destx3};
+									int[] xco = {destx, destx2, destx3+(48*r), destx3};
 									int[] yco = {desty2, desty2, desty3, desty3};
-									drawWalls3D(xco, yco, xc, yc, r, texdark);
+									drawWalls3D(xco, yco, xc, yc, r, texdark, true);
 								}
 							}
 							drawn[yc][xc] += 4;
 						}
 					}
-					if (yc-1 >= miny && map[yc-1][xc] < 120 && map[yc-1][xc] != -1 && p.y < yc*48) {
+					if (yc-1 >= miny && map[yc-1][xc] < 120 && p.y < yc*48) {
 						if (drawn[yc][xc]/8 != 1) {
 							boolean a = true;
 							int r = 1;
-							while(a) {
-								if (xc+r <= maxx && (map[yc][xc+r] >= 120 || map[yc][xc+r] == -1) && map[yc-1][xc+r] < 120 && map[yc-1][xc+r] != -1) {
-									drawn[yc][xc+r] += 8;
-									r += 1;
-								}
-								else {
-									r -= 1;
-									a = false;
+							if (map[yc-1][xc] != -1) {
+								while(a) {
+									if (xc+r <= maxx && map[yc][xc+r] >= 120 && map[yc-1][xc+r] < 120 && map[yc-1][xc+r] != -1) {
+										drawn[yc][xc+r] += 8;
+										r += 1;
+									}
+									else
+										a = false;
 								}
 							}
 							
-							if (r == 0) {
+							if (r < 2) {
 								destx2 = destx + size;
 								desty2 = desty;
 								destx3 = (xc*48) + (w/2-(int)p.x);
 								desty3 = (yc*48) + (h/2-(int)p.y);
 								boolean drawblack = false;
-								if (map[yc][xc] == -1)
+								if (map[yc-1][xc] == -1)
 									drawblack = true;
 								if (destx2-destx3 != 0 && desty2-desty3 != 0) {
 									int[] xco = {destx2, destx, destx3, destx3+48};
 									int[] yco = {desty2, desty2, desty3, desty3};
-									drawImage3D(xco, yco, xc, yc, tex, drawblack);
+									drawImage3D(xco, yco, xc, yc, texdark, drawblack);//tex, drawblack);, drawblack);
 								}
 							}
 							else {
-								destx2 = destx + (size*(r+1));
+								destx2 = destx + (size*r);
 								desty2 = desty;
 								destx3 = (xc*48) + (w/2-(int)p.x);
 								desty3 = (yc*48) + (h/2-(int)p.y);
 								if (destx2-destx3 != 0 && desty2-desty3 != 0) {
-									int[] xco = {destx2, destx, destx3, destx3+(48*(r+1))};
+									int[] xco = {destx2, destx, destx3, destx3+(48*r)};
 									int[] yco = {desty2, desty2, desty3, desty3};
-									drawWalls3D(xco, yco, xc, yc, r, texdark);
+									drawWalls3D(xco, yco, xc, yc, r, texdark, true);
 								}
 							}
 							drawn[yc][xc] += 8;
@@ -864,7 +865,7 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 				for (int xc = 0; xc <= mapw-1; xc++) {
 					destx = xc*size;
 					desty = yc*size;
-/* black walls */	if ((map[yc][xc] >= 120 && map[yc][xc] < 180) || map[yc][xc] == -1) {
+/* black walls */	if (map[yc][xc] >= 120 && map[yc][xc] < 180) {
 						g3d.setColor(Color.black);
 						g3d.fillRect(destx, desty, size, size);
 					}
@@ -898,7 +899,7 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 			ParameterBlock pb = (new ParameterBlock()).addSource(temptex);
 			try {
 				pb.add(new WarpPerspective(ptran.createInverse()));
-			//	pb.add(Interpolation.getInstance(Interpolation.INTERP_BILINEAR)); //antialiasing - leaves 'open' lines between textures
+			//	pb.add(Interpolation.getInstance(Interpolation.INTERP_BILINEAR)); //antialiasing - leaves 'open' lines in corners, and top level of pixels is sometimes missing
 			}
 			catch (Exception e) { e.printStackTrace(); }
 			
@@ -913,29 +914,48 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 		}
 	}
 	
-	public final void drawWalls3D(int[] x, int[] y, int xc, int yc, int num, Image a) { //multiple 3D walls with JAI
-	/*	BufferedImage temptex = new BufferedImage(48, 48, BufferedImage.TYPE_INT_ARGB_PRE);
-		//loop here, with variables for additions
-		temptex.getGraphics().drawImage(a, 0, 0, 48, 48, (map[yc][xc]%10)*48, (map[yc][xc]/10)*48, (map[yc][xc]%10)*48+48, (map[yc][xc]/10)*48+48, this);
+	public final void drawWalls3D(int[] x, int[] y, int xc, int yc, int num, Image a, boolean horizontal) { //multiple 3D walls with JAI
+		BufferedImage temptex = new BufferedImage(48*num, 48, BufferedImage.TYPE_INT_ARGB_PRE); //TODO: drawblack?
+		Graphics gtt = temptex.getGraphics();
+		gtt.setColor(Color.black);
 		
-		PerspectiveTransform ptran = PerspectiveTransform.getQuadToQuad(0, 0, 48, 0, 48, 48, 0, 48,	x[0], y[0], x[1], y[1], x[2], y[2], x[3], y[3]);
+		if (horizontal) {
+			for (int i = xc, j = 0; i < xc+num; i++) {
+				if (map[yc][i] == -1)
+					gtt.fillRect(j, 0, 48, 48);
+				else
+					gtt.drawImage(a, j, 0, 48+j, 48, (map[yc][i]%10)*48, (map[yc][i]/10)*48, (map[yc][i]%10)*48+48, (map[yc][i]/10)*48+48, this);
+				j += 48;
+			}
+		}
+		else {
+			for (int i = yc, j = 0; i < yc+num; i++) {
+				if (map[i][xc] == -1)
+					gtt.fillRect(j, 0, 48, 48);
+				else
+					gtt.drawImage(a, j,0, 48+j, 48, (map[i][xc]%10)*48, (map[i][xc]/10)*48, (map[i][xc]%10)*48+48, (map[i][xc]/10)*48+48, this);
+				j += 48;
+			}
+		}
+		
+		PerspectiveTransform ptran = PerspectiveTransform.getQuadToQuad(0, 0, 48*num, 0, 48*num, 48, 0, 48, x[0], y[0], x[1], y[1], x[2], y[2], x[3], y[3]);
 		
 		ParameterBlock pb = (new ParameterBlock()).addSource(temptex);
 		try {
 			pb.add(new WarpPerspective(ptran.createInverse()));
-		//	pb.add(Interpolation.getInstance(Interpolation.INTERP_BILINEAR)); //antialiasing - leaves 'open' lines between textures
+		//	pb.add(Interpolation.getInstance(Interpolation.INTERP_BILINEAR)); //antialiasing - leaves 'open' lines in corners, and top level of pixels is sometimes missing
 		}
 		catch (Exception e) { e.printStackTrace(); }
 		
 		RenderedOp renOp = JAI.create("warp", pb);
 		
-		((Graphics2D)dbImage.getGraphics()).drawRenderedImage(renOp, new AffineTransform()); */
+		((Graphics2D)dbImage.getGraphics()).drawRenderedImage(renOp, new AffineTransform());
 		
-		Graphics g2d = ((Graphics2D)dbImage.getGraphics());
+	/*	Graphics g2d = ((Graphics2D)dbImage.getGraphics());
 		g2d.setColor(Color.black);
 		g2d.fillPolygon(x, y, 4);
 		g2d.setColor(Color.red);
-		g2d.drawPolygon(x, y, 4);
+		g2d.drawPolygon(x, y, 4);*/
 	}
 	
 	public final void drawPlayer(Graphics g2) {
@@ -995,14 +1015,14 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 		double xc, yc, change = PI/16;
 		int xoff = 0, yoff = 0;
 		
-		if (map[(int)p.y/48][(int)(p.x+21)/48] >= 60)
+		if (map[(int)p.y/48][(int)(p.x+21)/48] >= 60 || map[(int)p.y/48][(int)(p.x+21)/48] == -1)
 			p.x = ((int)(p.x+21)/48)*48-22;
-		if (map[(int)p.y/48][(int)(p.x-21)/48] >= 60) //x tip collisions
+		if (map[(int)p.y/48][(int)(p.x-21)/48] >= 60 || map[(int)p.y/48][(int)(p.x-21)/48] == -1) //x tip collisions
 			p.x = ((int)(p.x-21)/48+1)*48+21;
 		
-		if (map[(int)(p.y+21)/48][(int)p.x/48] >= 60)
+		if (map[(int)(p.y+21)/48][(int)p.x/48] >= 60 || map[(int)(p.y+21)/48][(int)p.x/48] == -1)
 			p.y = ((int)(p.y+21)/48)*48-22;
-		if (map[(int)(p.y-21)/48][(int)p.x/48] >= 60) //y tip collisions
+		if (map[(int)(p.y-21)/48][(int)p.x/48] >= 60 || map[(int)(p.y-21)/48][(int)p.x/48] == -1) //y tip collisions
 			p.y = ((int)(p.y-21)/48+1)*48+21;
 		
 		for (double ang = change; ang < 2*PI; ang += change) { //circular collisions
@@ -1017,7 +1037,7 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 				if (ang > PI && ang < 2*PI) {
 					yoff = 1;
 				}
-				if (map[((int)p.y+(int)yc)/48][((int)p.x+(int)xc)/48] >= 60) {
+				if (map[((int)p.y+(int)yc)/48][((int)p.x+(int)xc)/48] >= 60 || map[((int)p.y+(int)yc)/48][((int)p.x+(int)xc)/48] == -1) {
 					p.x = ((int)(p.x+xc)/48+xoff)*48-xc;
 					p.y = ((int)(p.y+yc)/48+yoff)*48-yc;
 				}
@@ -1377,15 +1397,10 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 					draw();
 					timea = System.currentTimeMillis();
 				} //end if
-			//	else {
-			//		try { Thread.sleep(skip/16); }
-			//		catch(Exception e) { e.printStackTrace(); }
-			//	}
-				
-			/*	if (skip >= 0) {
-					try { Thread.sleep(skip); }
+				else {
+					try { Thread.sleep(skip/16); }
 					catch(Exception e) { e.printStackTrace(); }
-				} //end if*/
+				} //end else
 			} //end while
 			draw();
 		} //end run()
