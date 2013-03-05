@@ -28,7 +28,6 @@ public class Player {
 	
 	/*****************************************************
 	* Resets all the players stats back to defaults
-	* TODO: Reset stats back to last checkpoint
 	*****************************************************/
 	public final void resetStats(){
 		health = 100;
@@ -41,6 +40,7 @@ public class Player {
 		r = new Weapon(15);
 		for (int i = 0; i < inv.length; i++)
 			inv[i] = new Weapon();
+		//TODO: reload most-recent autosave/save
 	}
 	
 	public final void checkTele(){

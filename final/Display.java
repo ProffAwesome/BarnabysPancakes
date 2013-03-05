@@ -41,7 +41,7 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 	int mx, my, mapx, mapy;
 	double prot, test, mxd, myd, PI;
 	boolean pressed;
-	Image player, dark, dead, paused, tex, texdark, waterfade, cursors, hudinv, minimapgfx, invmain, weapdisp;
+	Image player, dark, paused, dead, loadingmap, tex, texdark, waterfade, cursors, hudinv, minimapgfx, invmain, weapdisp;
 	Cursor cursor;
 	Thread t;
 	public static Player p = new Player(true);
@@ -50,7 +50,7 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 	
 	Image dbImage, mapback, minimap, minimapback;
 	BufferedImage mapfront;
-	Graphics g2;
+	Graphics g, g2;
 	
 	public static int[][] map;
 	public static int maph = 0;
@@ -79,8 +79,9 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 		try { //load all images
 			player = ImageIO.read(getClass().getResource("gfx/rotationTest.png"));
 			dark = ImageIO.read(getClass().getResource("gfx/darkscreen.png"));
-			dead = ImageIO.read(getClass().getResource("gfx/dead.png"));
 			paused = ImageIO.read(getClass().getResource("gfx/gamepaused.png"));
+			dead = ImageIO.read(getClass().getResource("gfx/dead.png"));
+			loadingmap = ImageIO.read(getClass().getResource("gfx/loadingmap.png"));
 			tex = ImageIO.read(getClass().getResource("gfx/textures.png"));
 			texdark = ImageIO.read(getClass().getResource("gfx/texturesdark.png"));
 			waterfade = ImageIO.read(getClass().getResource("gfx/waterfade.png"));
@@ -100,7 +101,7 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 		PI = Math.PI;
 		movex = 0.0;
 		movey = 0.0;
-		map = readInMap("", getClass().getResource("maps/forestmap.map")/*("maps/BPisland.map")*/, false, 1);
+		map = readInMap("", getClass().getResource("maps/BPisland.map"), false, 1);
 		
 		this.requestFocus();
 	} //end init()
@@ -415,7 +416,7 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 		}*/
 	}
 	
-	public static final int[][] readInMap(String fnStr, URL fnURL, boolean isString, int spawnNum) { //spawnNum default is 0
+	public static final int[][] readInMap(String fnStr, URL fnURL, boolean isString, int spawnNum) { //spawnNum default is 1
 		//resets
 		int[][] area = null;
 		e = new Entity(p);
@@ -437,7 +438,7 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 				String l = r.readLine();
 				if (fLine){	//Initialize
 					try{
-						String[] s = l.split(","); //0=w, 1=h, 2=number of player spawns, 3=number of entities at end of file, 4=# of teleports
+						String[] s = l.split(","); //0=w, 1=h, 2=number of player spawns, 3=number of entities at end of file, 4=# of warps
 						mapw = Integer.parseInt(s[0]);
 						maph = Integer.parseInt(s[1]);
 						playerNums = Integer.parseInt(s[2]);
@@ -469,7 +470,7 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 					ln++;
 				} //end else if
 				else if (entitynum > 0) {
-					String[] s = l.split(","); //repeats x,y,type,health,damage,range for each entity
+					String[] s = l.split(","); //repeats type,x,y,difficulty for each entity
 					int entt = Integer.parseInt(s[0]); //type
 					int entx = Integer.parseInt(s[1])*48; //x position
 					int enty = Integer.parseInt(s[2])*48; //y position
@@ -481,9 +482,9 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 					String[] s = l.split(",");
 					int tx = Integer.parseInt(s[0]); //x position (all coords based on tile, not pixel)
 					int ty = Integer.parseInt(s[1]); //y position
-					String tTo = s[2]; //Destination's mapname -- root folder is final/maps/
+					String tTo = s[2]; //Destination's map name -- root folder is final/maps/
 					int sn = Integer.parseInt(s[3]); //spawn number
-					Entity.t[Entity.tIndex] = new Teleport(tId, tx, ty, tTo, sn);
+					Entity.t[tId] = new Teleport(tx, ty, tTo, sn);
 					tId++;
 				}
 			}	//end while
@@ -549,6 +550,10 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 			}
 		}
 		g2.drawImage(mapback, w/2-(int)p.x, h/2-(int)p.y, this);
+		
+		for (int i = 0; Entity.t[i] != null; i++) { //draw warps
+			g2.drawImage(tex, w/2-(int)p.x+Entity.t[i].x*48, h/2-(int)p.y+Entity.t[i].y*48, w/2-(int)p.x+Entity.t[i].x*48+48, h/2-(int)p.y+Entity.t[i].y*48+48, 288, 1200, 336, 1248, this);
+		}
 	}
 	
 	public final boolean[][] waterFade(boolean[][] fade, int xc, int yc) {
@@ -640,7 +645,7 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 		return fade;
 	}
 	
-	public final void drawMap3D(Graphics g2) { //TODO: (draw black walls with textures beside -1), don't draw black square on top layer
+	public final void drawMap3D(Graphics g2) {
 		short[][] drawn = new short[maph][mapw];
 		for (int yc = 0; yc < maph; yc++) {
 			for (int xc = 0; xc < mapw; xc++) {
@@ -706,7 +711,7 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 								if (destx2-destx3 != 0 && desty2-desty3 != 0) {
 									int[] xco = {destx2, destx2, destx3, destx3};
 									int[] yco = {desty2, desty, desty3, desty3+48};
-									drawImage3D(xco, yco, xc, yc, texdark, drawblack);
+									drawImage3D(xco, yco, xc, yc, texdark, drawblack, false);
 								}
 							}
 							else {
@@ -749,7 +754,7 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 								if (destx2-destx3 != 0 && desty2-desty3 != 0) {
 									int[] xco = {destx2, destx2, destx3, destx3};
 									int[] yco = {desty2, desty, desty3, desty3+48};
-									drawImage3D(xco, yco, xc, yc, texdark, drawblack);//tex, drawblack);
+									drawImage3D(xco, yco, xc, yc, texdark, drawblack, false);
 								}
 							}
 							else {
@@ -792,7 +797,7 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 								if (destx2-destx3 != 0 && desty2-desty3 != 0) {
 									int[] xco = {destx, destx2, destx3+48, destx3};
 									int[] yco = {desty2, desty2, desty3, desty3};
-									drawImage3D(xco, yco, xc, yc, texdark, drawblack);
+									drawImage3D(xco, yco, xc, yc, texdark, drawblack, false);
 								}
 							}
 							else {
@@ -835,7 +840,7 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 								if (destx2-destx3 != 0 && desty2-desty3 != 0) {
 									int[] xco = {destx2, destx, destx3, destx3+48};
 									int[] yco = {desty2, desty2, desty3, desty3};
-									drawImage3D(xco, yco, xc, yc, texdark, drawblack);//tex, drawblack);, drawblack);
+									drawImage3D(xco, yco, xc, yc, texdark, drawblack, false);
 								}
 							}
 							else {
@@ -856,6 +861,56 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 				}
 			}
 		}
+		
+		for (int i = 0; Entity.t[i] != null; i++) { //draw 3D walls of warps
+			int xval = Entity.t[i].x;
+			int yval = Entity.t[i].y;
+			
+			if (xval >= minx && xval <= maxx && yval >= miny && yval <= maxy) { //TODO: fix overhang of other walls
+				destx = (int)Math.round((xval*size) + xpo);
+				desty = (int)Math.round((yval*size) + ypo);
+				destx2 = destx + size;
+				desty2 = desty + size;
+				destx3 = ((xval+1)*48) + (w/2-(int)p.x);
+				desty3 = (yval*48) + (h/2-(int)p.y);
+				if (destx2-destx3 != 0 && desty2-desty3 != 0) {
+					int[] xco = {destx2, destx2, destx3, destx3};
+					int[] yco = {desty2, desty, desty3, desty3+48};
+					drawImage3D(xco, yco, xval, yval, tex, false, true);
+				}
+				
+				destx2 = destx;
+				desty2 = desty + size;
+				destx3 = (xval*48) + (w/2-(int)p.x);
+				desty3 = (yval*48) + (h/2-(int)p.y);
+				if (destx2-destx3 != 0 && desty2-desty3 != 0) {
+					int[] xco = {destx2, destx2, destx3, destx3};
+					int[] yco = {desty2, desty, desty3, desty3+48};
+					drawImage3D(xco, yco, xval, yval, tex, false, true);
+				}
+				
+				destx2 = destx + size;
+				desty2 = desty + size;
+				destx3 = (xval*48) + (w/2-(int)p.x);
+				desty3 = ((yval+1)*48) + (h/2-(int)p.y);
+				if (destx2-destx3 != 0 && desty2-desty3 != 0) {
+					int[] xco = {destx, destx2, destx3+48, destx3};
+					int[] yco = {desty2, desty2, desty3, desty3};
+					drawImage3D(xco, yco, xval, yval, tex, false, true);
+				}
+				
+				destx2 = destx + size;
+				desty2 = desty;
+				destx3 = (xval*48) + (w/2-(int)p.x);
+				desty3 = (yval*48) + (h/2-(int)p.y);
+				if (destx2-destx3 != 0 && desty2-desty3 != 0) {
+					int[] xco = {destx2, destx, destx3, destx3+48};
+					int[] yco = {desty2, desty2, desty3, desty3};
+					drawImage3D(xco, yco, xval, yval, tex, false, true);
+				}
+			}
+		}
+		
 		if (mapChanged) {
 			mapfront = null;
 			mapfront = new BufferedImage(mapw*size, maph*size, BufferedImage.TYPE_INT_ARGB_PRE);
@@ -889,10 +944,14 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 		g2.drawImage(mapfront, (int)Math.round(xpo), (int)Math.round(ypo), this);
 	}
 	
-	public final void drawImage3D(int[] x, int[] y, int xc, int yc, Image a, boolean drawblack) { //3D walls with JAI
+	public final void drawImage3D(int[] x, int[] y, int xc, int yc, Image a, boolean drawblack, boolean drawwarp) { //3D walls with JAI
 		if (!drawblack) {
 			BufferedImage temptex = new BufferedImage(48, 48, BufferedImage.TYPE_INT_ARGB_PRE);
-			temptex.getGraphics().drawImage(a, 0, 0, 48, 48, (map[yc][xc]%10)*48, (map[yc][xc]/10)*48, (map[yc][xc]%10)*48+48, (map[yc][xc]/10)*48+48, this);
+			
+			if (!drawwarp)
+				temptex.getGraphics().drawImage(a, 0, 0, 48, 48, (map[yc][xc]%10)*48, (map[yc][xc]/10)*48, (map[yc][xc]%10)*48+48, (map[yc][xc]/10)*48+48, this);
+			else
+				temptex.getGraphics().drawImage(a, 0, 0, 48, 48, 432, 1200, 480, 1248, this);
 			
 			PerspectiveTransform ptran = PerspectiveTransform.getQuadToQuad(0, 0, 48, 0, 48, 48, 0, 48,	x[0], y[0], x[1], y[1], x[2], y[2], x[3], y[3]);
 			
@@ -915,7 +974,7 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 	}
 	
 	public final void drawWalls3D(int[] x, int[] y, int xc, int yc, int num, Image a, boolean horizontal) { //multiple 3D walls with JAI
-		BufferedImage temptex = new BufferedImage(48*num, 48, BufferedImage.TYPE_INT_ARGB_PRE); //TODO: drawblack?
+		BufferedImage temptex = new BufferedImage(48*num, 48, BufferedImage.TYPE_INT_ARGB_PRE);
 		Graphics gtt = temptex.getGraphics();
 		gtt.setColor(Color.black);
 		
@@ -1008,6 +1067,17 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 			}
 			if (!noclip)
 				playerCollision();
+			
+			for (int i = 0; Entity.t[i] != null; i++) { //draw warps
+				if ((int)p.x/48 == Entity.t[i].x && (int)p.y/48 == Entity.t[i].y) {
+					Graphics g = getGraphics();
+					g.drawImage(dark, 0, 0, w, h, 0, 0, w, h, this);
+					g.drawImage(loadingmap, w/2-loadingmap.getWidth(this)/2, h/2-loadingmap.getHeight(this)/2, this);
+					map = readInMap("", getClass().getResource("maps/" + Entity.t[i].mapTo), false, Entity.t[i].sn);
+					draw();
+					return;
+				}
+			}
 		}
 	}
 	
@@ -1221,14 +1291,13 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 		if (invopen)
 			drawInv(g2);
 		wepDesc(g2);
-		if (p.dead){
-			g2.setColor(Color.black);
-			g2.fillRect(0, 0, w, h);
-			g2.drawImage(dead, w/2-dead.getWidth(this)/2, h/2-dead.getHeight(this)/2, this);
-		}
 		if (!running && !invopen && !p.dead) {
 			g2.drawImage(dark, 0, 0, w, h, 0, 0, w, h, this);
 			g2.drawImage(paused, w/2-paused.getWidth(this)/2, h/2-paused.getHeight(this)/2, this);
+		}
+		if (p.dead) {
+			g2.drawImage(dark, 0, 0, w, h, 0, 0, w, h, this);
+			g2.drawImage(dead, w/2-dead.getWidth(this)/2, h/2-dead.getHeight(this)/2, this);
 		}
 	}
 	
@@ -1362,7 +1431,6 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 	}	
 	
 	public final void draw() {
-		Graphics g = getGraphics();
 		dbImage = createImage(w, h);
 		g2 = dbImage.getGraphics();
 		if (menu == 0) { //in-game
@@ -1379,6 +1447,7 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 				t.start();
 			}
 		}
+		g = getGraphics();
 		g.drawImage(dbImage, 0, 0, this);
 	}
 	

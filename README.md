@@ -18,11 +18,18 @@ NOTES: Make sure you back up the BP you have just in case I fucked the pooch and
 ____________________________________________________
 
 TODO: 
--Teleporters 		40%
+
+-Teleporters 		80%
+
 -Moar enemies
+
 -More items
+
 	-Potions n shit
+
 	-Weap0nz
+
 	-Quest items
+
 -Global drops (e.g. every enemy has a chance to drop a potion or some shit)
 

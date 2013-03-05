@@ -2,13 +2,11 @@
  * Stores all the teleports on the map
  *****************************************************/
 public class Teleport{
-	private String mapTo;
-	public int tId;
+	public String mapTo;
 	public int x, y; 	//Co-ords of this teleporter
-	public int sn; 	//Co-ords of matching teleporter
+	public int sn; 	//Player spawn number of destination
 	
-	public Teleport(int tId, int x, int y, String mapTo, int sn){
-		this.tId = tId;
+	public Teleport(int x, int y, String mapTo, int sn){
 		this.x = x;
 		this.y = y;
 		this.mapTo = mapTo;

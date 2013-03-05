@@ -27,6 +27,7 @@ public class Entity{
 		w = new Weapon[20];
 		for (int i = 0; i < w.length; i++)
 			w[i] = new Weapon();
+		t = new Teleport[20];
 	}
 	
 	public double getDist(NPC from){
