@@ -137,8 +137,10 @@ public class MapComps extends JPanel implements ActionListener/*, MenuElement*/ 
 				}
 				MapDisplay.px = 0;
 				MapDisplay.py = 0;
-				MapDisplay.playerx = -1;
-				MapDisplay.playery = -1;
+				for (int i = 0; i < MapDisplay.plx.length; i++) {
+					MapDisplay.plx[i] = -1;
+					MapDisplay.ply[i] = -1;
+				}
 				loadfile = null;
 			}
 			else {

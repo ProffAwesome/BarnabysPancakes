@@ -25,7 +25,10 @@ public class MapDisplay extends Applet implements MouseListener, MouseMotionList
 	public static int maph = 0;
 	public static int mapw = 0;
 	public static int px, py; //view x and y
-	public static int playerx, playery; //x and y of player spawn
+	public static int[] plx, ply; //xs and ys of player spawns
+	public static int plnum; //current index of plx/ply being used
+	public static Teleport[] t = new Teleport[20];
+	public static int tnum = 0; //number of teleporters -- playerSpawnNum, but for warps
 	public static int zoom = 1;
 	int[] selected = new int[2]; //0 is x, 1 is y
 	public static boolean mapin = false;
@@ -57,8 +60,15 @@ public class MapDisplay extends Applet implements MouseListener, MouseMotionList
 		selected[1] = 0;
 		px = 0;
 		py = 0;
-		playerx = -1;
-		playery = -1;
+		
+		plx = new int[10]; //-1 = clear
+		ply = new int[10];
+		for (int i = 0; i < plx.length; i++) {
+			plx[i] = -1;
+			ply[i] = -1;
+		}
+		plnum = 0;
+		
 		box[0] = -1;
 		box[1] = -1;
 		addMouseListener(this);
@@ -112,7 +122,7 @@ public class MapDisplay extends Applet implements MouseListener, MouseMotionList
 		e.consume();
 	}
 	
-	public void clickComm(MouseEvent e) { //TODO: delete entity/warp/player?
+	public void clickComm(MouseEvent e) { //TODO: delete entity/warp/player? -- like "delete tiles"?
 		if (mx > w-181 && my < 469) { //if in the tile selection
 			selected[0] = (mx-(w-182))/18;
 			selected[1] = (my+1)/18;
@@ -135,8 +145,8 @@ public class MapDisplay extends Applet implements MouseListener, MouseMotionList
 		}
 		else if (mapin && mx < w-181 && selected[0] != -1 && selected[1] != -1 && (my-py)/(48/zoom) >= 0 && (my-py)/(48/zoom) < maph && (mx-px)/(48/zoom) >= 0 && (mx-px)/(48/zoom) < mapw) { //if in the map viewer
 			if (selected[0] == 101) { //player
-				playerx = (mx-px)/(48/zoom);
-				playery = (my-py)/(48/zoom);
+				plx[plnum] = (mx-px)/(48/zoom);
+				ply[plnum] = (my-py)/(48/zoom);
 				if (playerSpawnNum == 0)
 					playerSpawnNum = 1;
 			}
@@ -242,12 +252,12 @@ public class MapDisplay extends Applet implements MouseListener, MouseMotionList
 		if (playerSpawnNum > 0) {
 			try {
 				PrintWriter outputfile = new PrintWriter(new BufferedWriter(new FileWriter(filename)));
-				outputfile.println(mapw + "," + maph + "," + playerSpawnNum + "," + entnum + ",0");
+				outputfile.println(mapw + "," + maph + "," + plx.length + "," + entnum + "," + tnum);
 				
-				//TODO: multiple player spawns
-				outputfile.println(playerx + "," + playery);
+				for (int i = 0; i < plx.length; i++) //player spawns
+					outputfile.println(plx[i] + "," + ply[i]);
 				
-				for (int i = 0; i < maph; i++) {
+				for (int i = 0; i < maph; i++) { //map
 					for (int j = 0; j < mapw; j++) {
 						if (map[i][j] < 16 && map[i][j] != -1)
 							outputfile.print("0");
@@ -259,6 +269,16 @@ public class MapDisplay extends Applet implements MouseListener, MouseMotionList
 					}
 					outputfile.println();
 				} //end for
+				
+				//entities
+				//
+				
+				for (int i = 0; i < t.length; i++) { //warps
+					if (t[i] != null) {
+						outputfile.println(t[i].x + "," + t[i].y + "," + t[i].mapTo + "," + t[i].sn);
+					}
+				}
+				
 				outputfile.close();	//closes file
 				JOptionPane.showMessageDialog(MapCreator.frame, "Save successful!");
 			} //end try
@@ -274,6 +294,8 @@ public class MapDisplay extends Applet implements MouseListener, MouseMotionList
 	
 	public static final int[][] readInMap(File fn) {
 		int[][] area = null;
+		t = null;
+		t = new Teleport[20];
 		try{
 			BufferedReader r = new BufferedReader(new InputStreamReader(new FileInputStream(fn)));
 			int entitynum = 0;
@@ -281,6 +303,8 @@ public class MapDisplay extends Applet implements MouseListener, MouseMotionList
 			int teleports = 0;
 			int tId = 0;
 			int playerNums = 0, pNumLn = 1;
+			playerSpawnNum = 0;
+			tnum = 0;
 			boolean fLine = true;
 			while (r.ready()){
 				String l = r.readLine();
@@ -290,22 +314,21 @@ public class MapDisplay extends Applet implements MouseListener, MouseMotionList
 						mapw = Integer.parseInt(s[0]);
 						maph = Integer.parseInt(s[1]);
 						playerNums = Integer.parseInt(s[2]);
-						entitynum = Integer.parseInt(s[3]);
+						entnum = Integer.parseInt(s[3]);
 						teleports = Integer.parseInt(s[4]);
 						px = 0;
 						py = 0;
-						entnum = Integer.parseInt(s[4]);
 						area = new int[maph][mapw];	//Generate the array
 						fLine = false;
 					}
 					catch (Exception e) { System.out.println("Corrupt map file (#101)\n"+ e); }
 				}
 				else if (pNumLn <= playerNums) {
-					if (pNumLn == 1) {
-						String[] s = l.split(",");
-						playerx/*[pNumLn-1]*/ = Integer.parseInt(s[0]);
-						playery/*[pNumLn-1]*/ = Integer.parseInt(s[1]);
-					}
+					String[] s = l.split(",");
+					plx[pNumLn-1] = Integer.parseInt(s[0]);
+					ply[pNumLn-1] = Integer.parseInt(s[1]);
+					if (Integer.parseInt(s[0]) != -1 && Integer.parseInt(s[1]) != -1)
+						playerSpawnNum++;
 					pNumLn++;
 				}
 				else if (ln < maph) {
@@ -330,13 +353,14 @@ public class MapDisplay extends Applet implements MouseListener, MouseMotionList
 					entitynum--;
 				}
 				else if (teleports > 0){
-				/*	String[] s = l.split(",");
+					String[] s = l.split(",");
 					int tx = Integer.parseInt(s[0]); //x position (all coords based on tile, not pixel)
 					int ty = Integer.parseInt(s[1]); //y position
-					String tTo = s[2]; //Destination's mapname -- root folder is final/maps/
+					String tTo = s[2]; //Destination's map name -- root folder is final/maps/
 					int sn = Integer.parseInt(s[3]); //spawn number
-					Entity.t[Entity.tIndex] = new Teleport(tId, tx, ty, tTo, sn);
-					tId++;*/
+					t[tId] = new Teleport(tx, ty, tTo, sn);
+					tnum++;
+					tId++;
 				}
 			}	//end while
 			r.close();
@@ -359,8 +383,8 @@ public class MapDisplay extends Applet implements MouseListener, MouseMotionList
 						String[] s = l.split(","); //0=w, 1=h, 2=p.x, 3=p.y, 4=number of entities at end of file
 						mapw = Integer.parseInt(s[0]);
 						maph = Integer.parseInt(s[1]);
-						playerx = Integer.parseInt(s[2]);
-						playery = Integer.parseInt(s[3]);
+						plx[0] = Integer.parseInt(s[2]);
+						ply[0] = Integer.parseInt(s[3]);
 						playerSpawnNum = 1;
 						px = 0;
 						py = 0;
@@ -435,12 +459,17 @@ public class MapDisplay extends Applet implements MouseListener, MouseMotionList
 				g2.drawRect(((box[0]*48)/zoom+px)+1, ((box[1]*48)/zoom+py)+1, 48/zoom-2, 48/zoom-2);
 				g2.drawRect(((box[0]*48)/zoom+px)+2, ((box[1]*48)/zoom+py)+2, 48/zoom-4, 48/zoom-4);
 			}
-			if (playerx != -1 && playery != -1) { //player position
-				sourcex = 240;
-				sourcey = 1200;
-				destx = (playerx*48)/zoom+px;
-				desty = (playery*48)/zoom+py;
-				g2.drawImage(tex, destx, desty, destx+(48/zoom), desty+(48/zoom), sourcex, sourcey, sourcex+48, sourcey+48, this);
+			for (int i = 0; i < t.length; i++) { //draw warps
+				if (t[i] != null) {
+					g2.drawImage(tex, (t[i].x*48)/zoom+px, (t[i].y*48)/zoom+py, (t[i].x*48)/zoom+px+48, (t[i].y*48)/zoom+py+48, 288, 1200, 336, 1248, this);
+				}
+			}
+			for (int i = 0; i < plx.length; i++) { //draw player spawns
+				if (plx[i] != -1 && ply[i] != -1) {
+					destx = (plx[i]*48)/zoom+px;
+					desty = (ply[i]*48)/zoom+py;
+					g2.drawImage(tex, destx, desty, destx+(48/zoom), desty+(48/zoom), 240, 1200, 288, 1248, this);
+				}
 			}
 			int[] mmxy = {minx, miny, maxx, maxy};
 			return mmxy;

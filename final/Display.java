@@ -443,8 +443,8 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 						maph = Integer.parseInt(s[1]);
 						playerNums = Integer.parseInt(s[2]);
 						entitynum = Integer.parseInt(s[3]);
-						teleports = Integer.parseInt(s[4]);
-						area = new int[maph][mapw];	//Generate the array
+						teleports = Integer.parseInt(s[4]); //generate the teleport array based on number of?
+						area = new int[maph][mapw];	//generate the array
 						fLine = false;
 					}
 					catch (Exception e) { System.out.println("Corrupt map file (#101)\n"+ e); }
@@ -452,8 +452,12 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 				else if (pNumLn <= playerNums) {
 					if (pNumLn == spawnNum) {
 						String[] s = l.split(",");
-						p.x = (double)Integer.parseInt(s[0])*48 + 24;
-						p.y = (double)Integer.parseInt(s[1])*48 + 24;
+						if (Integer.parseInt(s[0]) != -1 && Integer.parseInt(s[1]) != -1) {
+							p.x = (double)Integer.parseInt(s[0])*48 + 24;
+							p.y = (double)Integer.parseInt(s[1])*48 + 24;
+						}
+						else
+							System.out.println("Corrupt map file (#106) -- player spawn incorrect");
 					}
 					pNumLn++;
 				}
@@ -551,8 +555,9 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 		}
 		g2.drawImage(mapback, w/2-(int)p.x, h/2-(int)p.y, this);
 		
-		for (int i = 0; Entity.t[i] != null; i++) { //draw warps
-			g2.drawImage(tex, w/2-(int)p.x+Entity.t[i].x*48, h/2-(int)p.y+Entity.t[i].y*48, w/2-(int)p.x+Entity.t[i].x*48+48, h/2-(int)p.y+Entity.t[i].y*48+48, 288, 1200, 336, 1248, this);
+		for (int i = 0; i < Entity.t.length; i++) { //draw warps
+			if (Entity.t[i] != null)
+				g2.drawImage(tex, w/2-(int)p.x+Entity.t[i].x*48, h/2-(int)p.y+Entity.t[i].y*48, w/2-(int)p.x+Entity.t[i].x*48+48, h/2-(int)p.y+Entity.t[i].y*48+48, 288, 1200, 336, 1248, this);
 		}
 	}
 	
@@ -862,51 +867,53 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 			}
 		}
 		
-		for (int i = 0; Entity.t[i] != null; i++) { //draw 3D walls of warps
-			int xval = Entity.t[i].x;
-			int yval = Entity.t[i].y;
-			
-			if (xval >= minx && xval <= maxx && yval >= miny && yval <= maxy) { //TODO: fix overhang of other walls
-				destx = (int)Math.round((xval*size) + xpo);
-				desty = (int)Math.round((yval*size) + ypo);
-				destx2 = destx + size;
-				desty2 = desty + size;
-				destx3 = ((xval+1)*48) + (w/2-(int)p.x);
-				desty3 = (yval*48) + (h/2-(int)p.y);
-				if (destx2-destx3 != 0 && desty2-desty3 != 0) {
-					int[] xco = {destx2, destx2, destx3, destx3};
-					int[] yco = {desty2, desty, desty3, desty3+48};
-					drawImage3D(xco, yco, xval, yval, tex, false, true);
-				}
+		for (int i = 0; i < Entity.t.length; i++) { //draw 3D walls of warps
+			if (Entity.t[i] != null) {
+				int xval = Entity.t[i].x;
+				int yval = Entity.t[i].y;
 				
-				destx2 = destx;
-				desty2 = desty + size;
-				destx3 = (xval*48) + (w/2-(int)p.x);
-				desty3 = (yval*48) + (h/2-(int)p.y);
-				if (destx2-destx3 != 0 && desty2-desty3 != 0) {
-					int[] xco = {destx2, destx2, destx3, destx3};
-					int[] yco = {desty2, desty, desty3, desty3+48};
-					drawImage3D(xco, yco, xval, yval, tex, false, true);
-				}
-				
-				destx2 = destx + size;
-				desty2 = desty + size;
-				destx3 = (xval*48) + (w/2-(int)p.x);
-				desty3 = ((yval+1)*48) + (h/2-(int)p.y);
-				if (destx2-destx3 != 0 && desty2-desty3 != 0) {
-					int[] xco = {destx, destx2, destx3+48, destx3};
-					int[] yco = {desty2, desty2, desty3, desty3};
-					drawImage3D(xco, yco, xval, yval, tex, false, true);
-				}
-				
-				destx2 = destx + size;
-				desty2 = desty;
-				destx3 = (xval*48) + (w/2-(int)p.x);
-				desty3 = (yval*48) + (h/2-(int)p.y);
-				if (destx2-destx3 != 0 && desty2-desty3 != 0) {
-					int[] xco = {destx2, destx, destx3, destx3+48};
-					int[] yco = {desty2, desty2, desty3, desty3};
-					drawImage3D(xco, yco, xval, yval, tex, false, true);
+				if (xval >= minx && xval <= maxx && yval >= miny && yval <= maxy) { //TODO: fix overhang of other walls
+					destx = (int)Math.round((xval*size) + xpo);
+					desty = (int)Math.round((yval*size) + ypo);
+					destx2 = destx + size;
+					desty2 = desty + size;
+					destx3 = ((xval+1)*48) + (w/2-(int)p.x);
+					desty3 = (yval*48) + (h/2-(int)p.y);
+					if (destx2-destx3 != 0 && desty2-desty3 != 0) {
+						int[] xco = {destx2, destx2, destx3, destx3};
+						int[] yco = {desty2, desty, desty3, desty3+48};
+						drawImage3D(xco, yco, xval, yval, tex, false, true);
+					}
+					
+					destx2 = destx;
+					desty2 = desty + size;
+					destx3 = (xval*48) + (w/2-(int)p.x);
+					desty3 = (yval*48) + (h/2-(int)p.y);
+					if (destx2-destx3 != 0 && desty2-desty3 != 0) {
+						int[] xco = {destx2, destx2, destx3, destx3};
+						int[] yco = {desty2, desty, desty3, desty3+48};
+						drawImage3D(xco, yco, xval, yval, tex, false, true);
+					}
+					
+					destx2 = destx + size;
+					desty2 = desty + size;
+					destx3 = (xval*48) + (w/2-(int)p.x);
+					desty3 = ((yval+1)*48) + (h/2-(int)p.y);
+					if (destx2-destx3 != 0 && desty2-desty3 != 0) {
+						int[] xco = {destx, destx2, destx3+48, destx3};
+						int[] yco = {desty2, desty2, desty3, desty3};
+						drawImage3D(xco, yco, xval, yval, tex, false, true);
+					}
+					
+					destx2 = destx + size;
+					desty2 = desty;
+					destx3 = (xval*48) + (w/2-(int)p.x);
+					desty3 = (yval*48) + (h/2-(int)p.y);
+					if (destx2-destx3 != 0 && desty2-desty3 != 0) {
+						int[] xco = {destx2, destx, destx3, destx3+48};
+						int[] yco = {desty2, desty2, desty3, desty3};
+						drawImage3D(xco, yco, xval, yval, tex, false, true);
+					}
 				}
 			}
 		}
