@@ -11,10 +11,10 @@ public class Entity{
 	static NPC root = null;
 	static int nNpc = -1; //The last NPC index 
 	public static Player p;
-	public static Weapon[] w = new Weapon[20];
+	public static Weapon[] w = new Weapon[30];
 	public static int wIndex;
 	
-	public static Teleport[] t = new Teleport[20];
+	public static Teleport[] t = new Teleport[30];
 	public static int tIndex;
 
 	
@@ -24,10 +24,10 @@ public class Entity{
 		tIndex = 0;
 		root = null;
 		nNpc = -1;
-		w = new Weapon[20];
+		w = new Weapon[50];
 		for (int i = 0; i < w.length; i++)
 			w[i] = new Weapon();
-		t = new Teleport[20];
+		t = new Teleport[30];
 	}
 	
 	public double getDist(NPC from){

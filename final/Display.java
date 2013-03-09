@@ -11,8 +11,7 @@ import java.net.URL;
 import javax.imageio.*;
 import javax.media.jai.*;
 
-//TODO: draw warps
-//add stamina for sprinting?
+//TODO: add stamina for sprinting?
 
 public class Display extends Applet implements MouseListener, MouseMotionListener, KeyListener {
 	private static final long serialVersionUID = 1L;
@@ -24,7 +23,7 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 	public static int menu = 0; //0 = in-game, 1 = main menu, 2 = options, etc.
 	public static boolean running = true; //while game is running
 	public static boolean runT = true;
-	public static boolean hudon = true, mapon = true, noclip = false;
+	public static boolean hudon = true, mapon = true, noclip = false, walls3D = true;
 	boolean invopen = false;
 	boolean invdrag = false;
 	Weapon invtemp = new Weapon();
@@ -33,7 +32,7 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 	boolean moveleft = false;
 	boolean moveright = false;
 	boolean run = false;
-	static boolean mapChanged = false;
+	public static boolean mapChanged = false;
 	public static boolean classicControls = false;
 	double movex, movey;
 	long nextframe;
@@ -422,8 +421,12 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 		e = new Entity(p);
 		rootProj = null;
 		
-		if (!isString)
-			fnStr = fnURL.toString().replaceAll("%20", " ").substring(6);
+		if (!isString) { //various formatting fixes
+			String temp = fnURL.toString().substring(6);
+			temp = temp.replaceAll("%20", " ");
+			temp = temp.replaceAll("%5c", "/");
+			fnStr = temp;
+		}
 		mapName = fnStr;
 		
 		try{
@@ -1075,12 +1078,15 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 			if (!noclip)
 				playerCollision();
 			
-			for (int i = 0; Entity.t[i] != null; i++) { //draw warps
-				if ((int)p.x/48 == Entity.t[i].x && (int)p.y/48 == Entity.t[i].y) {
+			for (int i = 0; Entity.t[i] != null; i++) { //check if in warp
+				if ((int)p.x/48 == Entity.t[i].x && (int)p.y/48 == Entity.t[i].y) { //warp to map
 					Graphics g = getGraphics();
 					g.drawImage(dark, 0, 0, w, h, 0, 0, w, h, this);
 					g.drawImage(loadingmap, w/2-loadingmap.getWidth(this)/2, h/2-loadingmap.getHeight(this)/2, this);
-					map = readInMap("", getClass().getResource("maps/" + Entity.t[i].mapTo), false, Entity.t[i].sn);
+				//	if (Entity.t[i].mapTo.charAt(1) == ':')
+//local v URL			map = readInMap(Entity.t[i].mapTo, getClass().getResource(""), true, Entity.t[i].sn);
+				//	else
+						map = readInMap("", getClass().getResource("maps/" + Entity.t[i].mapTo), false, Entity.t[i].sn);
 					draw();
 					return;
 				}
@@ -1444,7 +1450,8 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 			drawMap(g2);
 			drawEntity(g2);
 			drawPlayer(g2);
-			drawMap3D(g2);
+			if (walls3D)
+				drawMap3D(g2);
 			drawHUD(g2);
 			mapChanged = false;
 			if (runT) {

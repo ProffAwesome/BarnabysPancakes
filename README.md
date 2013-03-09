@@ -19,7 +19,7 @@ ____________________________________________________
 
 TODO: 
 
--Teleporters 		80%
+-Teleporters 		95% -- did you want to add the animation/timer thing?
 
 -Moar enemies
 

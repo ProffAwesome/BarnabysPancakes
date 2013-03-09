@@ -27,7 +27,7 @@ public class MapDisplay extends Applet implements MouseListener, MouseMotionList
 	public static int px, py; //view x and y
 	public static int[] plx, ply; //xs and ys of player spawns
 	public static int plnum; //current index of plx/ply being used
-	public static Teleport[] t = new Teleport[20];
+	public static Teleport[] t = new Teleport[30];
 	public static int tnum = 0; //number of teleporters -- playerSpawnNum, but for warps
 	public static int zoom = 1;
 	int[] selected = new int[2]; //0 is x, 1 is y
@@ -150,7 +150,9 @@ public class MapDisplay extends Applet implements MouseListener, MouseMotionList
 				if (playerSpawnNum == 0)
 					playerSpawnNum = 1;
 			}
-			else if (selected[0] == 102) { } //warps
+			else if (selected[0] == 102) {
+				placeWarp((mx-px)/(48/zoom), (my-py)/(48/zoom));
+			} //warps
 			else if (selected[0] == 103) { } //entity
 			else if (e.getButton() == MouseEvent.BUTTON1) {
 				int tile = selected[0] + selected[1]*10;
@@ -245,6 +247,63 @@ public class MapDisplay extends Applet implements MouseListener, MouseMotionList
 				}
 			}
 			draw();
+		}
+	}
+	
+	public final void placeWarp(int coordx, int coordy) {
+		boolean b = false; //true if a warp's already there
+		for (int i = 0; i < t.length; i++) { //check warps
+			if (t[i] != null && coordx == t[i].x && coordy == t[i].y)
+				b = true;
+		}
+		if (!b) { //placing the warp
+			//popup to set map and spawn number
+			int spawnNum = 1;
+			String mapTo;
+			String a = (String)JOptionPane.showInputDialog(MapCreator.frame, "Enter map name (base folder is \"final\\maps\\<mapname>\") and the spawn number, separated by a comma (no space)\nExample: \"test\\testname.map,1\" -- map directory of \"final\\maps\\test\\testmap.map\" with the first spawn number", "New Warp", JOptionPane.PLAIN_MESSAGE, null, null, "test\\testname.map,1");
+			if (a != null) {
+				String[] str = a.split(",");
+				if (str[0].charAt(0) == '\\')
+					mapTo = str[0].substring(1);
+				else
+					mapTo = str[0];
+				try {
+					spawnNum = Integer.parseInt(str[1]);
+				}
+				catch(Exception e) { e.printStackTrace(); return; }
+				
+				for (int i = 0; i < t.length; i++) { //adds new warp
+					if (t[i] == null) {
+						t[i] = new Teleport(coordx, coordy, mapTo, spawnNum);
+						tnum++;
+						return;
+					}
+				}
+			}
+		}
+		else { //edit warp that's already there
+			int ind = 0;
+			for (int i = 0; i < t.length; i++) {
+				if (t[i] != null && coordx == t[i].x && coordy == t[i].y)
+					ind = i;
+			}
+			int spawnNum = t[ind].sn;
+			String mapTo = t[ind].mapTo;
+			String a = (String)JOptionPane.showInputDialog(MapCreator.frame, "Enter map name (base folder is \"final\\maps\\<mapname>\") and the spawn number, separated by a comma (no space)\nExample: \"test\\testname.map,1\" -- map directory of \"final\\maps\\test\\testmap.map\" with the first spawn number", "New Warp", JOptionPane.PLAIN_MESSAGE, null, null, mapTo + "," + spawnNum);
+			if (a != null) {
+				String[] str = a.split(",");
+				if (str[0].charAt(0) == '\\')
+					mapTo = str[0].substring(1);
+				else
+					mapTo = str[0];
+				try {
+					spawnNum = Integer.parseInt(str[1]);
+				}
+				catch(Exception e) { e.printStackTrace(); return; }
+				
+				t[ind] = new Teleport(coordx, coordy, mapTo, spawnNum);
+				return;
+			}
 		}
 	}
 	

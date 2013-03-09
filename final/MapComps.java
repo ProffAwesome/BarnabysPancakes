@@ -189,7 +189,7 @@ public class MapComps extends JPanel implements ActionListener/*, MenuElement*/ 
 	}
 	
 	public void replaceTiles() {
-		String a = (String)JOptionPane.showInputDialog(MapComps.this, "Enter the block to be replaced and the replacing block, separated by a comma (no space)\nExample: 0,60 --> replaces all grey floors into dark-grey bricks\n-1 counts as deleted blocks", "Replace Tiles", JOptionPane.PLAIN_MESSAGE, null, null, 0 + "," + 60);
+		String a = (String)JOptionPane.showInputDialog(MapComps.this, "Enter the block to be replaced and the replacing block, separated by a comma (no space)\nExample: 0,120 --> replaces all grey floors into dark-grey bricks\n-1 counts as deleted blocks", "Replace Tiles", JOptionPane.PLAIN_MESSAGE, null, null, "0,120");
 		if (a != null) {
 			String[] nwh = a.split(",");
 			int oldt, newt;
@@ -197,7 +197,7 @@ public class MapComps extends JPanel implements ActionListener/*, MenuElement*/ 
 				oldt = Integer.parseInt(nwh[0]);
 				newt = Integer.parseInt(nwh[1]);
 			}
-			catch(Exception e) { System.out.println(e); return; }
+			catch(Exception e) { e.printStackTrace(); return; }
 			
 			if (oldt != newt) {
 				if (oldt >= -1 && oldt < 255 && newt >= -1 && newt < 255) {
