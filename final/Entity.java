@@ -24,7 +24,7 @@ public class Entity{
 		tIndex = 0;
 		root = null;
 		nNpc = -1;
-		w = new Weapon[50];
+		w = new Weapon[30];
 		for (int i = 0; i < w.length; i++)
 			w[i] = new Weapon();
 		t = new Teleport[30];
