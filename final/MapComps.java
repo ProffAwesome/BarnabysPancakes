@@ -130,6 +130,7 @@ public class MapComps extends JPanel implements ActionListener/*, MenuElement*/ 
 			MapDisplay.maph = nh;
 			MapDisplay.map = new int[nh][nw];
 			if (newmap) {
+				MapDisplay.clearMap();
 				for (int ay = 0; ay < nh; ay++) {
 					for (int ax = 0; ax < nw; ax++) {
 						MapDisplay.map[ay][ax] = 0;

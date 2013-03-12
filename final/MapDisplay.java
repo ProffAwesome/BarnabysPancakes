@@ -41,6 +41,7 @@ public class MapDisplay extends Applet implements MouseListener, MouseMotionList
 	BufferedImage mapfront;
 	Graphics g2;
 	public static int playerSpawnNum = 0;
+	public static String entityTemp = "";
 	
 	/**
 	 * this gets rid of exception for not using native acceleration
@@ -120,6 +121,14 @@ public class MapDisplay extends Applet implements MouseListener, MouseMotionList
 		mpy = my;
 		draw();
 		e.consume();
+	}
+	
+	public static final void clearMap() { //clears variables when loading a map or making a new one
+		playerSpawnNum = 0;
+		tnum = 0;
+		t = null;
+		t = new Teleport[20];
+		entityTemp = "";
 	}
 	
 	public void clickComm(MouseEvent e) { //TODO: delete entity/warp/player? -- like "delete tiles"?
@@ -330,7 +339,11 @@ public class MapDisplay extends Applet implements MouseListener, MouseMotionList
 				} //end for
 				
 				//entities
-				//
+				String[] tempE = entityTemp.split("-");
+				for (int i = 0; i < entnum; i++) {
+					outputfile.println(tempE[i]);
+					System.out.println(tempE[i]);
+				}
 				
 				for (int i = 0; i < t.length; i++) { //warps
 					if (t[i] != null) {
@@ -353,8 +366,7 @@ public class MapDisplay extends Applet implements MouseListener, MouseMotionList
 	
 	public static final int[][] readInMap(File fn) {
 		int[][] area = null;
-		t = null;
-		t = new Teleport[20];
+		clearMap();
 		try{
 			BufferedReader r = new BufferedReader(new InputStreamReader(new FileInputStream(fn)));
 			int entitynum = 0;
@@ -362,8 +374,6 @@ public class MapDisplay extends Applet implements MouseListener, MouseMotionList
 			int teleports = 0;
 			int tId = 0;
 			int playerNums = 0, pNumLn = 1;
-			playerSpawnNum = 0;
-			tnum = 0;
 			boolean fLine = true;
 			while (r.ready()){
 				String l = r.readLine();
@@ -374,6 +384,7 @@ public class MapDisplay extends Applet implements MouseListener, MouseMotionList
 						maph = Integer.parseInt(s[1]);
 						playerNums = Integer.parseInt(s[2]);
 						entnum = Integer.parseInt(s[3]);
+						entitynum = Integer.parseInt(s[3]);
 						teleports = Integer.parseInt(s[4]);
 						px = 0;
 						py = 0;
@@ -409,6 +420,7 @@ public class MapDisplay extends Applet implements MouseListener, MouseMotionList
 					int enty = Integer.parseInt(s[2])*48; //y position
 					int entd = Integer.parseInt(s[3]); //difficulty
 					e.addNPC(entt, entx, enty, entd);*/
+					entityTemp += l + "-";
 					entitynum--;
 				}
 				else if (teleports > 0){
@@ -431,8 +443,10 @@ public class MapDisplay extends Applet implements MouseListener, MouseMotionList
 	
 	public static final int[][] readInOldMap(File fn) {
 		int[][] area = null;
+		clearMap();
 		try{
 			BufferedReader r = new BufferedReader(new InputStreamReader(new FileInputStream(fn)));
+			int entitynum = 0;
 			int ln = 0;
 			boolean fLine = true;
 			while (r.ready()){
@@ -448,10 +462,12 @@ public class MapDisplay extends Applet implements MouseListener, MouseMotionList
 						px = 0;
 						py = 0;
 						entnum = Integer.parseInt(s[4]);
+						entitynum = Integer.parseInt(s[4]);
 						area = new int[maph][mapw];	//Generate the array
 						fLine = false;
 					}catch (Exception e){	System.out.println("Corrupt map file (#101)\n"+ e);	}
-				}else{
+				}
+				else if (ln < maph) {
 					int fill = 0;
 					for (int i = 0; i < mapw; i++){
 						if (!l.substring(i*2, (i*2)+2).equals("--")) {
@@ -462,7 +478,17 @@ public class MapDisplay extends Applet implements MouseListener, MouseMotionList
 							area[ln][i] = -1;
 					}
 					ln++;
-				}	//end if
+				} //end else if
+				else if (entitynum > 0) {
+				/*	String[] s = l.split(","); //repeats x,y,type,health,damage,range for each entity
+					int entt = Integer.parseInt(s[0]); //type
+					int entx = Integer.parseInt(s[1])*48; //x position
+					int enty = Integer.parseInt(s[2])*48; //y position
+					int entd = Integer.parseInt(s[3]); //difficulty
+					e.addNPC(entt, entx, enty, entd);*/
+					entityTemp += l + "-";
+					entitynum--;
+				}
 			}	//end while
 			r.close();
 			mapin = true;
