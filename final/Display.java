@@ -520,8 +520,18 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 					sourcey = (map[yc][xc]/10)*48;
 					destx = (xc*48)/* + (w/2-(int)p.x)*/;
 					desty = (yc*48)/* + (h/2-(int)p.y)*/;
+					
 					if (map[yc][xc] >= 60 && map[yc][xc] < 120)
 						sourcey = (map[yc][xc]/10-6)*48;
+					else if (map[yc][xc] == 190) {
+						sourcex = 192;
+						sourcey = 0;
+					}
+					else if (map[yc][xc] == 191) {
+						sourcex = 672;
+						sourcey = 48;
+					}
+					
 					if (map[yc][xc] == -1) {
 						g3.setColor(Color.black);
 						g3.fillRect(destx, desty, 48, 48);
@@ -937,17 +947,16 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 					else if (map[yc][xc] >= 180) {
 						int sourcex = (map[yc][xc]%10)*48;
 						int sourcey = (map[yc][xc]/10)*48;
+						if (map[yc][xc] == 190) {
+							sourcex = 192;
+							sourcey = 0;
+						}
+						else if (map[yc][xc] == 191) {
+							sourcex = 192;
+							sourcey = 48;
+						}
 						g3d.drawImage(tex, destx, desty, destx+size, desty+size, sourcex, sourcey, sourcex+48, sourcey+48, this);
 					}
-/* show walls *//*	if (map[yc][xc] == -1) {
-						g3d.setColor(Color.black);
-						g3d.fillRect(destx, desty, size, size);
-					}
-					else if (map[yc][xc] >= 120) {
-						int sourcex = (map[yc][xc]%10)*48;
-						int sourcey = (map[yc][xc]/10)*48;
-						g3d.drawImage(tex, destx, desty, destx+size, desty+size, sourcex, sourcey, sourcex+48, sourcey+48, this);
-					}*/
 				}
 			}
 		}
@@ -958,8 +967,19 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 		if (!drawblack) {
 			BufferedImage temptex = new BufferedImage(48, 48, BufferedImage.TYPE_INT_ARGB_PRE);
 			
-			if (!drawwarp)
-				temptex.getGraphics().drawImage(a, 0, 0, 48, 48, (map[yc][xc]%10)*48, (map[yc][xc]/10)*48, (map[yc][xc]%10)*48+48, (map[yc][xc]/10)*48+48, this);
+			if (!drawwarp) {
+				int sourcex = (map[yc][xc]%10)*48;
+				int sourcey = (map[yc][xc]/10)*48;
+				if (map[yc][xc] == 190) {
+					sourcex = 192;
+					sourcey = 0;
+				}
+				else if (map[yc][xc] == 191) {
+					sourcex = 192;
+					sourcey = 48;
+				}
+				temptex.getGraphics().drawImage(a, 0, 0, 48, 48, sourcex, sourcey, sourcex+48, sourcey+48, this);
+			}
 			else
 				temptex.getGraphics().drawImage(a, 0, 0, 48, 48, 432, 1200, 480, 1248, this);
 			
@@ -992,8 +1012,20 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 			for (int i = xc, j = 0; i < xc+num; i++) {
 				if (map[yc][i] == -1)
 					gtt.fillRect(j, 0, 48, 48);
-				else
-					gtt.drawImage(a, j, 0, 48+j, 48, (map[yc][i]%10)*48, (map[yc][i]/10)*48, (map[yc][i]%10)*48+48, (map[yc][i]/10)*48+48, this);
+				else {
+					int sourcex = (map[yc][i]%10)*48;
+					int sourcey = (map[yc][i]/10)*48;
+					if (map[yc][i] == 190) {
+						sourcex = 192;
+						sourcey = 0;
+					}
+					else if (map[yc][i] == 191) {
+						sourcex = 192;
+						sourcey = 48;
+					}
+					
+					gtt.drawImage(a, j, 0, 48+j, 48, sourcex, sourcey, sourcex+48, sourcey+48, this);
+				}
 				j += 48;
 			}
 		}
@@ -1001,8 +1033,20 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 			for (int i = yc, j = 0; i < yc+num; i++) {
 				if (map[i][xc] == -1)
 					gtt.fillRect(j, 0, 48, 48);
-				else
-					gtt.drawImage(a, j,0, 48+j, 48, (map[i][xc]%10)*48, (map[i][xc]/10)*48, (map[i][xc]%10)*48+48, (map[i][xc]/10)*48+48, this);
+				else {
+					int sourcex = (map[i][xc]%10)*48;
+					int sourcey = (map[i][xc]/10)*48;
+					if (map[i][xc] == 190) {
+						sourcex = 192;
+						sourcey = 0;
+					}
+					else if (map[i][xc] == 191) {
+						sourcex = 192;
+						sourcey = 48;
+					}
+					
+					gtt.drawImage(a, j, 0, 48+j, 48, sourcex, sourcey, sourcex+48, sourcey+48, this);
+				}
 				j += 48;
 			}
 		}
@@ -1039,8 +1083,9 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 	public final void movePlayer() {
 		if (running) {
 			double speed = 5.1666;
-			if (map[(int)p.y/48][(int)p.x/48] == 3)
-				speed *= 0.6667; //water movement
+			if (!noclip && p.x > 22 && p.y > 22 && p.x < mapw*48-23 && p.y < maph*48-23)
+				if (map[(int)p.y/48][(int)p.x/48] == 3)
+					speed *= 0.6667; //water movement
 			
 			if (!((moveup || movedown) && (moveleft || moveright)))
 				speed = Math.sqrt(speed*speed*2);
@@ -1075,7 +1120,7 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 					p.y += speed*Math.sin(prot+PI/2);
 				}
 			}
-			if (!noclip)
+			if (!noclip && p.x > 22 && p.y > 22 && p.x < mapw*48-23 && p.y < maph*48-23)
 				playerCollision();
 			
 			for (int i = 0; Entity.t[i] != null; i++) { //check if in warp
