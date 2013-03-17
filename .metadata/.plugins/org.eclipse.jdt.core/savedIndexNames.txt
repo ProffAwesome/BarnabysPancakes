@@ -1,19 +1,5 @@
 INDEX VERSION 1.126+C:\Users\User\Documents\GitHub\BarnabysPancakes\.metadata\.plugins\org.eclipse.jdt.core
-4108727661.index
-4041092966.index
-3065916431.index
-3982416622.index
-4155206848.index
-30765161.index
-1159422651.index
-3974580528.index
-1697886153.index
-1995173708.index
-1299022128.index
+2687686843.index
+3985276001.index
+379075268.index
 3766076148.index
-1115467115.index
-3133528496.index
-1498219845.index
-163172794.index
-573543369.index
-305854171.index

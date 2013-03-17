@@ -106,6 +106,7 @@ public class MapComps extends JPanel implements ActionListener/*, MenuElement*/ 
 				temp = temp + in.readLine() + "\n";
 			}
 			read = true;
+			in.close();
 		} //end try
 		catch(Exception e){
 			System.out.println(e);

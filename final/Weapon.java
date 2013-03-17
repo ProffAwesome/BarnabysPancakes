@@ -32,8 +32,8 @@ public class Weapon {
 	public Weapon(int weap){
 		if (weap > 0 && weap != 10 && weap != 15) {
 			try{
-				RandomAccessFile raf = new RandomAccessFile("npc/weps.bin", "rw");
-				this.readRaf(raf, weap-1); //TODO: make fist a weapon? or have it as a default if no weapon assigned?
+				RandomAccessFile raf = new RandomAccessFile("items/weps.bin", "rw");
+				this.readRaf(raf, weap); //TODO: make fist a weapon? or have it as a default if no weapon assigned?
 			}catch(Exception e){
 				e.printStackTrace();
 			}

@@ -2,7 +2,7 @@
 <classpath>
 	<classpathentry kind="src" path=""/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="lib/jai_codec.jar"/>
-	<classpathentry kind="lib" path="lib/jai_core.jar"/>
+	<classpathentry kind="lib" path="C:/Users/User/Documents/GitHub/BarnabysPancakes/final/lib/jai_codec.jar"/>
+	<classpathentry kind="lib" path="C:/Users/User/Documents/GitHub/BarnabysPancakes/final/lib/jai_core.jar"/>
 	<classpathentry kind="output" path=""/>
 </classpath>

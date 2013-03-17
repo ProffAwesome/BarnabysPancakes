@@ -1,0 +1,19 @@
+!SESSION 2013-03-16 20:25:53.364 -----------------------------------------------
+eclipse.buildId=M20120914-1800
+java.version=1.7.0_10
+java.vendor=Oracle Corporation
+BootLoader constants: OS=win32, ARCH=x86_64, WS=win32, NL=en_US
+Framework arguments:  -product org.eclipse.epp.package.jee.product
+Command-line arguments:  -os win32 -ws win32 -arch x86_64 -product org.eclipse.epp.package.jee.product
+
+!ENTRY org.eclipse.jdt.core 4 0 2013-03-16 20:30:19.144
+!MESSAGE Invalid ZIP archive: lib/jai_codec.jar [in final]
+
+!ENTRY org.eclipse.jdt.core 4 0 2013-03-16 20:30:19.171
+!MESSAGE Invalid ZIP archive: lib/jai_core.jar [in final]
+
+!ENTRY org.eclipse.jdt.core 4 0 2013-03-16 20:31:43.334
+!MESSAGE Invalid ZIP archive: lib/jai_codec.jar [in final]
+
+!ENTRY org.eclipse.jdt.core 4 0 2013-03-16 20:31:43.335
+!MESSAGE Invalid ZIP archive: lib/jai_core.jar [in final]
