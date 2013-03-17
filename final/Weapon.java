@@ -16,7 +16,7 @@ public class Weapon {
 	public int wid;
 	public String name;
 	public int damage, dur, range, rarity;	//dur: # of swings before it breaks; rate: # of shots per 5 seconds
-	public int rate;
+	public float rate;
 	public int ammo;
 //	private long lastUsed;
 	public Image model;
@@ -111,7 +111,7 @@ public class Weapon {
 	    	int minDam = raf.readInt();
 	    	int maxDam = raf.readInt();
 	    	this.damage = (int)((Math.random()*(maxDam-minDam))+minDam);
-	    	this.rate = raf.readInt();
+	    	this.rate = raf.readFloat();
 	    	this.range = raf.readInt();
 	    	this.dur = raf.readInt();
 	    	this.rarity = raf.readInt();
