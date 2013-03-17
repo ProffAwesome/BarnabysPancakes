@@ -41,6 +41,7 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 	double prot, test, mxd, myd, PI;
 	boolean pressed;
 	Image player, dark, paused, dead, loadingmap, tex, texdark, waterfade, cursors, hudinv, minimapgfx, invmain, weapdisp;
+	public static Image scroll;
 	Cursor cursor;
 	Thread t;
 	public static Player p = new Player(true);
@@ -89,6 +90,7 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 			minimapgfx = ImageIO.read(getClass().getResource("gfx/minimap.png"));
 			invmain = ImageIO.read(getClass().getResource("gfx/inventory.png"));
 			weapdisp = ImageIO.read(getClass().getResource("gfx/weapondisplay.png"));
+			scroll = ImageIO.read(getClass().getResource("items/scroll.png"));
 		}
 		catch(Exception e) { e.printStackTrace(); }
 		
@@ -143,7 +145,7 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 			else if (mx >= 0 && mx < hudinv.getWidth(this) && my >= h-hudinv.getHeight(this) && my < h) {
 				if (mx >= 7 && mx <= 57 && my >= h-hudinv.getHeight(this)+2 && my <= h-hudinv.getHeight(this)+52) { //if q
 					if (invdrag) {
-						if (p.q.wid <= 0) {
+						if (p.q.wid == -1) {
 							p.q = invtemp;
 							invtemp = null;
 							invtemp = new Weapon();
@@ -155,16 +157,16 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 							invtemp = temp;
 						}
 					}
-					else if (!invdrag && p.q.wid > 0) {
+					else if (!invdrag && p.q.wid >= 0) {
 						invtemp = p.q;
 						p.q = null;
-						p.q = new Weapon(0);
+						p.q = new Weapon();
 						invdrag = true;
 					}
 				}
 				else if (mx >= 33 && mx <= 83 && my >= h-hudinv.getHeight(this)+60 && my <= h-hudinv.getHeight(this)+110) { //if l
 					if (invdrag) {
-						if (p.l.wid <= 0) {
+						if (p.l.wid == -1) {
 							p.l = invtemp;
 							invtemp = null;
 							invtemp = new Weapon();
@@ -176,16 +178,16 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 							invtemp = temp;
 						}
 					}
-					else if (!invdrag && p.l.wid > 0) {
+					else if (!invdrag && p.l.wid >= 0) {
 						invtemp = p.l;
 						p.l = null;
-						p.l = new Weapon(0);
+						p.l = new Weapon();
 						invdrag = true;
 					}
 				}
 				else if (mx >= 91 && mx <= 141 && my >= h-hudinv.getHeight(this)+86 && my <= h-hudinv.getHeight(this)+136) { //if r
 					if (invdrag) {
-						if (p.r.wid <= 0) {
+						if (p.r.wid == -1) {
 							p.r = invtemp;
 							invtemp = null;
 							invtemp = new Weapon();
@@ -197,10 +199,10 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 							invtemp = temp;
 						}
 					}
-					else if (!invdrag && p.r.wid > 0) {
+					else if (!invdrag && p.r.wid >= 0) {
 						invtemp = p.r;
 						p.r = null;
-						p.r = new Weapon(0);
+						p.r = new Weapon();
 						invdrag = true;
 					}
 				}
@@ -1331,17 +1333,17 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 			g2.drawImage(hudinv, 0, h-hudinv.getHeight(this), this);
 			g2.setColor(Color.black);
 			if (p.q.wid != -1) {
-				g2.drawImage(p.q.modelL, 7, h-hudinv.getHeight(this)+2, this);
+				g2.drawImage(p.q.model, 7, h-hudinv.getHeight(this)+2, this);
 				if (p.q.wid == 10) //if it has ammo
 					g2.drawString(p.q.ammo + "", 10, h-hudinv.getHeight(this)+15);
 			}
 			if (p.l.wid != -1) {
-				g2.drawImage(p.l.modelL, 33, h-hudinv.getHeight(this)+60, this);
+				g2.drawImage(p.l.model, 33, h-hudinv.getHeight(this)+60, this);
 				if (p.l.wid == 10) //if it has ammo
 					g2.drawString(p.l.ammo + "", 36, h-hudinv.getHeight(this)+73);
 			}
 			if (p.r.wid != -1) {
-				g2.drawImage(p.r.modelL, 91, h-hudinv.getHeight(this)+86, this);
+				g2.drawImage(p.r.model, 91, h-hudinv.getHeight(this)+86, this);
 				if (p.r.wid == 10) //if it has ammo
 					g2.drawString(p.r.ammo + "", 94, h-hudinv.getHeight(this)+99);
 			}
@@ -1446,7 +1448,7 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 		int y = -5;
 		g.drawImage(weapdisp, x, y, this);
 		g.setColor(Color.black);
-		g.drawImage(w2.modelL, x+198, y+54, this);
+		g.drawImage(w2.model, x+198, y+54, this);
 		g.drawString("Name  " + w2.name, x+17, y+67);
 		g.drawString("Name:", x+18, y+67); //bolds "Name"
 		
@@ -1475,14 +1477,14 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 			if (p.inv[i].wid != -1) {
 				xdraw += (i%8)*56;
 				ydraw += (i/8)*56;
-				g2.drawImage(p.inv[i].modelL, xstart+xdraw, ystart+ydraw, this);
+				g2.drawImage(p.inv[i].model, xstart+xdraw, ystart+ydraw, this);
 				if (p.inv[i].wid == 10) //if it has ammo
 					g2.drawString(p.inv[i].ammo + "", xstart+xdraw+3, ystart+ydraw+13);
 			//	System.out.println(i + " " + p.inv[i].wid);
 			}
 		}
 		if (invdrag) {
-			g2.drawImage(invtemp.modelL, mx-25, my-25, this);
+			g2.drawImage(invtemp.model, mx-25, my-25, this);
 			if (invtemp.wid == 10) //if it has ammo
 				g2.drawString(invtemp.ammo + "", mx-22, my-12);
 		}

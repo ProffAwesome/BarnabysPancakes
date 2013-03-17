@@ -19,7 +19,7 @@ public class Weapon {
 	public int rate;
 	public int ammo;
 //	private long lastUsed;
-	public Image modelL, modelS;
+	public Image model;
 	private int recLen = 68;
 	
 	public Weapon(){	this.wid = -1;	} //clear other variables?
@@ -49,8 +49,7 @@ public class Weapon {
 			else if (weap == 15)
 				this.name = "Teleportation Ability";
 			try {
-				this.modelL = ImageIO.read(new File("items/" + this.wid + "l.png"));
-		    	this.modelS = ImageIO.read(new File("items/" + this.wid + "s.png"));
+				this.model = ImageIO.read(new File("items/" + this.wid + ".png"));
 			}
 			catch (IOException e) {	e.printStackTrace();	}
 		}
@@ -120,8 +119,7 @@ public class Weapon {
 	    //	System.out.println(minDam + "-" + maxDam);
 	    	//this.dur = raf.readInt();
 	    	//this.mid = raf.readInt();
-	    	modelL = ImageIO.read(new File("items/" + this.wid + "l.png"));
-	    	modelS = ImageIO.read(new File("items/" + this.wid + "s.png"));
+	    	model = ImageIO.read(new File("items/" + this.wid + ".png"));
     	}
     //	System.out.println(this.name);
     }
@@ -141,10 +139,14 @@ public class Weapon {
 	}
 	
 	public void drawWeapon(Graphics g, Display m, int x, int y, boolean small){
-		if (small)
-			g.drawImage(this.modelS, x, y, m);
+		if (small) {
+			//if not an ability
+				g.drawImage(this.model, x, y, x+25, y+25, 0, 0, 50, 50, m);
+			//else if ability
+				//g.drawImage(Display.scroll, x, y, x+25, y+25, 0, 0, 50, 50, m);
+		}
 		else
-			g.drawImage(this.modelL, x, y, m);
+			g.drawImage(this.model, x, y, m);
 	}
 	
 	public int getDamage(){	return this.damage;	}
