@@ -26,13 +26,12 @@ public class MapDisplay extends Applet implements MouseListener, MouseMotionList
 	public static int mapw = 0;
 	public static int px, py; //view x and y
 	public static int[] plx, ply; //xs and ys of player spawns
-	public static int plnum; //current index of plx/ply being used
 	public static Teleport[] t = new Teleport[30];
 	public static int tnum = 0; //number of teleporters -- playerSpawnNum, but for warps
 	public static int zoom = 1;
 	int[] selected = new int[2]; //0 is x, 1 is y
 	public static boolean mapin = false;
-	public static boolean delete = false;
+	public static boolean delete = false, deletepw = false;
 	public static boolean drawDiag = false;
 	boolean draw3d = false;
 	boolean first = true;
@@ -68,7 +67,7 @@ public class MapDisplay extends Applet implements MouseListener, MouseMotionList
 			plx[i] = -1;
 			ply[i] = -1;
 		}
-		plnum = 0;
+		playerSpawnNum = 0;
 		
 		box[0] = -1;
 		box[1] = -1;
@@ -136,10 +135,8 @@ public class MapDisplay extends Applet implements MouseListener, MouseMotionList
 			selected[0] = (mx-(w-182))/18;
 			selected[1] = (my+1)/18;
 			if (selected[0] > 4 && selected[1] == 25) {
-				if (selected[0] == 5) { //player
+				if (selected[0] == 5) //player
 					selected[0] = 101;
-				//TODO: trigger popup for player number -- have "new player", and "player #X" to edit
-				}
 				else if (selected[0] == 6) //warp
 					selected[0] = 102;
 				else if (selected[0] == 7) { //entity
@@ -149,15 +146,53 @@ public class MapDisplay extends Applet implements MouseListener, MouseMotionList
 			}
 			if (selected[1] > 25)
 				selected[1] = 25;
-			//drawTile();
-			draw();
 		}
 		else if (mapin && mx < w-181 && selected[0] != -1 && selected[1] != -1 && (my-py)/(48/zoom) >= 0 && (my-py)/(48/zoom) < maph && (mx-px)/(48/zoom) >= 0 && (mx-px)/(48/zoom) < mapw) { //if in the map viewer
-			if (selected[0] == 101) { //player
-				plx[plnum] = (mx-px)/(48/zoom);
-				ply[plnum] = (my-py)/(48/zoom);
-				if (playerSpawnNum == 0)
-					playerSpawnNum = 1;
+			if (deletepw) {
+				int tempx = (mx-px)/(48/zoom);
+				int tempy = (my-py)/(48/zoom);
+				for (int i = 0; i < t.length; i++) { //delete warps
+					if (t[i] != null && t[i].x == tempx && t[i].y == tempy) {
+						t[i] = null;
+					}
+				}
+				for (int i = 0; i < plx.length; i++) { //delete player spawns
+					if (plx[i] == tempx && ply[i] == tempy) {
+						plx[i] = -1;
+						ply[i] = -1;
+						playerSpawnNum--;
+					}
+				}
+			}
+			else if (selected[0] == 101) { //player
+				boolean conflict = false;
+				int tempx = (mx-px)/(48/zoom);
+				int tempy = (my-py)/(48/zoom);
+				for (int i = 0; i < t.length; i++) { //conflicts with warps
+					if (t[i] != null && t[i].x == tempx && t[i].y == tempy) {
+						conflict = true;
+					}
+				}
+				for (int i = 0; i < plx.length; i++) { //conflicts with other player spawns
+					if (plx[i] == tempx && ply[i] == tempy) {
+						conflict = true;
+					}
+				}
+				if (conflict) {
+					System.out.println("conflict");
+					return;
+				}
+				
+				for (int i = 0; i < plx.length; i++) { //place spawn point
+					if (plx[i] == -1 && ply[i] == -1) {
+						plx[i] = tempx;
+						ply[i] = tempy;
+						playerSpawnNum++;
+						draw();
+						return;
+					}
+				}
+				System.out.println("too many player spawns");
 			}
 			else if (selected[0] == 102) {
 				placeWarp((mx-px)/(48/zoom), (my-py)/(48/zoom));
@@ -255,16 +290,23 @@ public class MapDisplay extends Applet implements MouseListener, MouseMotionList
 					box[1] = -1;
 				}
 			}
-			draw();
 		}
+		draw();
 	}
 	
 	public final void placeWarp(int coordx, int coordy) {
 		boolean b = false; //true if a warp's already there
-		for (int i = 0; i < t.length; i++) { //check warps
+		for (int i = 0; i < t.length; i++) { //check other warps
 			if (t[i] != null && coordx == t[i].x && coordy == t[i].y)
 				b = true;
 		}
+		for (int i = 0; i < plx.length; i++) { //check player spawns
+			if (plx[i] == coordx && ply[i] == coordy) {
+				System.out.println("conflict with a player spawn");
+				return;
+			}
+		}
+		
 		if (!b) { //placing the warp
 			//popup to set map and spawn number
 			int spawnNum = 1;
@@ -554,6 +596,8 @@ public class MapDisplay extends Applet implements MouseListener, MouseMotionList
 					destx = (plx[i]*48)/zoom+px;
 					desty = (ply[i]*48)/zoom+py;
 					g2.drawImage(tex, destx, desty, destx+(48/zoom), desty+(48/zoom), 240, 1200, 288, 1248, this);
+					g2.setColor(Color.black);
+					g2.drawString(""+(i+1), destx+21, desty+29);
 				}
 			}
 			int[] mmxy = {minx, miny, maxx, maxy};

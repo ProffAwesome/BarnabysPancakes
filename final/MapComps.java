@@ -13,8 +13,8 @@ public class MapComps extends JPanel implements ActionListener/*, MenuElement*/ 
 	
 	File loadfile = null;
 	public static JMenuBar menubar = new JMenuBar();
-	JMenu file, options;
-	JMenuItem newmap, load, loadold, save, saveas, exit, opUp, mapsize, replace, diag, zoomin, zoomout, delete;
+	JMenu file, tools, options;
+	JMenuItem newmap, load, loadold, save, saveas, exit, opUp, mapsize, replace, diag, zoomin, zoomout, delete, deletepw;
 	JCheckBox draw3d;
 	JFileChooser fc = new JFileChooser(); //file chooser window
 	
@@ -34,6 +34,7 @@ public class MapComps extends JPanel implements ActionListener/*, MenuElement*/ 
 	
 	public void makeMenu() {
 		file = new JMenu("File");
+		tools = new JMenu("Tools");
 		options = new JMenu("Options");
 		
 		
@@ -54,6 +55,7 @@ public class MapComps extends JPanel implements ActionListener/*, MenuElement*/ 
 		zoomin = new JMenuItem("Zoom In");
 		zoomout = new JMenuItem("Zoom Out");
 		delete = new JMenuItem("Delete Tiles");
+		deletepw = new JMenuItem("Delete Plr/Wrp/Ent");
 		
 		
 		file.add(newmap);
@@ -63,17 +65,20 @@ public class MapComps extends JPanel implements ActionListener/*, MenuElement*/ 
 		file.add(saveas);
 		file.add(exit);
 		
+		tools.add(mapsize);
+		tools.add(replace);
+		
 		options.add(draw3d);
 		options.add(opUp);
 		
 		menubar.add(file);
+		menubar.add(tools);
 		menubar.add(options);
-		menubar.add(mapsize);
-		menubar.add(replace);
-		menubar.add(diag);
 		menubar.add(zoomin);
 		menubar.add(zoomout);
+		menubar.add(diag);
 		menubar.add(delete);
+		menubar.add(deletepw);
 		
 		
 		newmap.addActionListener(this);
@@ -89,6 +94,7 @@ public class MapComps extends JPanel implements ActionListener/*, MenuElement*/ 
 		zoomin.addActionListener(this);
 		zoomout.addActionListener(this);
 		delete.addActionListener(this);
+		deletepw.addActionListener(this);
 	}
 	
 	/**
@@ -291,6 +297,16 @@ public class MapComps extends JPanel implements ActionListener/*, MenuElement*/ 
 			else {
 				MapDisplay.delete = true;
 				delete.setSelected(true);
+			}
+		}
+		else if (avt.getSource() == deletepw) {
+			if (MapDisplay.deletepw) {
+				MapDisplay.deletepw = false;
+				deletepw.setSelected(false);
+			}
+			else {
+				MapDisplay.deletepw = true;
+				deletepw.setSelected(true);
 			}
 		}
 		else if (avt.getSource() == exit) {
