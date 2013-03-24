@@ -16,6 +16,8 @@ import javax.media.jai.*;
 public class Display extends Applet implements MouseListener, MouseMotionListener, KeyListener {
 	private static final long serialVersionUID = 1L;
 	
+	boolean mapImageVariables = false;
+	
 	public static int w, h; //w is the width of the applet, h is the height
 	int x, y;
 	int fps = 32;
@@ -52,10 +54,12 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 	BufferedImage mapfront;
 	Graphics g, g2;
 	
+	public static int minx, miny, maxx, maxy;
 	public static int[][] map;
 	public static int maph = 0;
 	public static int mapw = 0;
 	public static String mapName;
+	boolean[][] fade;
 	
 	long timea = System.currentTimeMillis(), timeb;
 	
@@ -504,24 +508,113 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 		catch (Exception e){	System.out.println("Corrupt map file (#102)\n" + e);	return null;	}
 	}
 	
+	public final void minMax() {
+		minx = 0;
+		miny = 0;
+		maxx = mapw-1;
+		maxy = maph-1;
+		
+		if (p.x < w/2+47)
+			minx = 0;
+		else
+			minx = ((int)p.x/48+1)-((w/2)/48+1)-1;
+		if (p.y < h/2+47)
+			miny = 0;
+		else
+			miny = ((int)p.y/48+1)-((h/2)/48+1)-1;
+		
+		maxx = minx + (w/48)+1;
+		maxy = miny + (h/48)+1;
+		
+		if (maxx >= mapw)
+			maxx = mapw-1;
+		if (maxy >= maph)
+			maxy = maph-1;
+		if (minx < 0)
+			minx = 0;
+		if (miny < 0)
+			miny = 0;
+	}
+	
 	public final void drawMap(Graphics g2) {
 		g2.setColor(Color.black);
 		g2.fillRect(0, 0, w, h);
 		
-		boolean[][] fade = new boolean[maph][mapw];
-		
-		if (mapChanged) {
-			int minx = 0, miny = 0, maxx = mapw-1, maxy = maph-1;
+		if (mapImageVariables) {
+			if (mapChanged) {
+				fade = null;
+				fade = new boolean[maph][mapw];
+				int minx = 0, miny = 0, maxx = mapw-1, maxy = maph-1;
+				mapback = null;
+				mapback = createImage(mapw*48, maph*48);
+				Graphics g3 = mapback.getGraphics();
+				int sourcex, sourcey, destx, desty;
+				for (int yc = miny; yc <= maxy; yc++) {
+					for (int xc = minx; xc <= maxx; xc++) {
+						sourcex = (map[yc][xc]%10)*48;
+						sourcey = (map[yc][xc]/10)*48;
+						destx = (xc*48)/* + (w/2-(int)p.x)*/;
+						desty = (yc*48)/* + (h/2-(int)p.y)*/;
+						
+						if (map[yc][xc] >= 60 && map[yc][xc] < 120)
+							sourcey = (map[yc][xc]/10-6)*48;
+						else if (map[yc][xc] == 190) {
+							sourcex = 192;
+							sourcey = 0;
+						}
+						else if (map[yc][xc] == 191) {
+							sourcex = 672;
+							sourcey = 48;
+						}
+						
+						if (map[yc][xc] == -1) {
+							g3.setColor(Color.black);
+							g3.fillRect(destx, desty, 48, 48);
+						}
+						else
+							g3.drawImage(tex, destx, desty, destx+48, desty+48, sourcex, sourcey, sourcex+48, sourcey+48, this);
+						
+						if ((map[yc][xc] == 3 || map[yc][xc] == 63) && xc > 0 && xc < mapw-1 && yc > 0 && yc < maph-1) {
+							if ((map[yc+1][xc] == 3 || map[yc+1][xc] == 63) && (map[yc-1][xc] == 3 || map[yc-1][xc] == 63) && (map[yc][xc+1] == 3 || map[yc][xc+1] == 63) && (map[yc][xc-1] == 3 || map[yc][xc-1] == 63))
+								fade[yc][xc] = true;
+							else
+								fade[yc][xc] = false;
+						}
+						else
+							fade[yc][xc] = false;
+					}
+				}
+				
+				for (int yc = 1; yc < maph-1; yc++) {
+					for (int xc = 1; xc < mapw-1; xc++) {
+						if (fade[yc][xc] == true) {
+							fade = waterFade(fade, xc, yc);
+							if (fade[yc][xc] == false) { //to check if an adjacent tile's fade should change
+								if (fade[yc][xc-1] == true)
+									fade = waterFade(fade, xc-1, yc);
+								if (fade[yc-1][xc] == true)
+									fade = waterFade(fade, xc, yc-1);
+								if (fade[yc-1][xc-1] == true)
+									fade = waterFade(fade, xc-1, yc-1);
+							}
+						}
+					}
+				}
+			}
+			g2.drawImage(mapback, w/2-(int)p.x, h/2-(int)p.y, this);
+		}
+		else if (!mapImageVariables) {
 			mapback = null;
-			mapback = createImage(mapw*48, maph*48);
-			Graphics g3 = mapback.getGraphics();
+			Graphics g3 = dbImage.getGraphics();
+			g2.setColor(Color.black);
+			g2.fillRect(0, 0, w, h);
 			int sourcex, sourcey, destx, desty;
 			for (int yc = miny; yc <= maxy; yc++) {
 				for (int xc = minx; xc <= maxx; xc++) {
 					sourcex = (map[yc][xc]%10)*48;
 					sourcey = (map[yc][xc]/10)*48;
-					destx = (xc*48)/* + (w/2-(int)p.x)*/;
-					desty = (yc*48)/* + (h/2-(int)p.y)*/;
+					destx = (xc*48) + w/2 - (int)p.x;
+					desty = (yc*48) + h/2 - (int)p.y;
 					
 					if (map[yc][xc] >= 60 && map[yc][xc] < 120)
 						sourcey = (map[yc][xc]/10-6)*48;
@@ -540,20 +633,36 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 					}
 					else
 						g3.drawImage(tex, destx, desty, destx+48, desty+48, sourcex, sourcey, sourcex+48, sourcey+48, this);
-					
-					if ((map[yc][xc] == 3 || map[yc][xc] == 63) && xc > 0 && xc < mapw-1 && yc > 0 && yc < maph-1) {
-						if ((map[yc+1][xc] == 3 || map[yc+1][xc] == 63) && (map[yc-1][xc] == 3 || map[yc-1][xc] == 63) && (map[yc][xc+1] == 3 || map[yc][xc+1] == 63) && (map[yc][xc-1] == 3 || map[yc][xc-1] == 63))
-							fade[yc][xc] = true;
-						else
-							fade[yc][xc] = false;
-					}
-					else
-						fade[yc][xc] = false;
 				}
 			}
 			
-			for (int yc = 1; yc < maph-1; yc++) {
-				for (int xc = 1; xc < mapw-1; xc++) {
+			if (mapChanged) {
+				fade = null;
+				fade = new boolean[maph][mapw];
+				for (int yc = 1; yc < maph-1; yc++) {
+					for (int xc = 1; xc < mapw-1; xc++) {
+						if ((map[yc][xc] == 3 || map[yc][xc] == 63) && xc > 0 && xc < mapw-1 && yc > 0 && yc < maph-1) {
+							if ((map[yc+1][xc] == 3 || map[yc+1][xc] == 63) && (map[yc-1][xc] == 3 || map[yc-1][xc] == 63) && (map[yc][xc+1] == 3 || map[yc][xc+1] == 63) && (map[yc][xc-1] == 3 || map[yc][xc-1] == 63))
+								fade[yc][xc] = true;
+							else
+								fade[yc][xc] = false;
+						}
+						else
+							fade[yc][xc] = false;
+					}
+				}
+			}
+			int tminx = minx, tminy = miny, tmaxx = maxx, tmaxy = maxy;
+			if (tminx < 1)
+				tminx = 1;
+			if (tminy < 1)
+				tminy = 1;
+			if (tmaxx > mapw-1)
+				tmaxx = mapw-1;
+			if (tmaxy > maph-1)
+				tmaxy = maph-1;
+			for (int yc = tminy; yc <= tmaxy; yc++) {
+				for (int xc = tminx; xc <= tmaxx; xc++) {
 					if (fade[yc][xc] == true) {
 						fade = waterFade(fade, xc, yc);
 						if (fade[yc][xc] == false) { //to check if an adjacent tile's fade should change
@@ -568,7 +677,6 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 				}
 			}
 		}
-		g2.drawImage(mapback, w/2-(int)p.x, h/2-(int)p.y, this);
 		
 		for (int i = 0; i < Entity.t.length; i++) { //draw warps
 			if (Entity.t[i] != null)
@@ -576,11 +684,24 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 		}
 	}
 	
-	public final boolean[][] waterFade(boolean[][] fade, int xc, int yc) {
-		int destx = (xc*48);
-		int desty = (yc*48);
-		Graphics g3 = mapback.getGraphics();
-		g3.drawImage(tex, destx, desty, destx+48, desty+48, 144, 0, 192, 48, this);
+	public final boolean[][] waterFade(boolean[][] fade, int xc, int yc) { //TODO: fix
+		Graphics g3;
+		Graphics2D g3d;
+		int destx, desty;
+		if (mapImageVariables) {
+			destx = (xc*48);
+			desty = (yc*48);
+			g3 = mapback.getGraphics();
+			g3d = (Graphics2D)mapback.getGraphics();
+			g3.drawImage(tex, destx, desty, destx+48, desty+48, 144, 0, 192, 48, this);
+		}
+		else {
+			destx = (xc*48) + w/2 - (int)p.x;
+			desty = (yc*48) + h/2 - (int)p.y;
+			g3 = dbImage.getGraphics();
+			g3d = (Graphics2D)dbImage.getGraphics();
+			g3.drawImage(tex, destx, desty, destx+48, desty+48, 144, 0, 192, 48, this);
+		}
 		
 		int c = 0;
 		if (fade[yc+1][xc])
@@ -619,7 +740,6 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 				if (fade[yc-1][xc] && fade[yc][xc+1] && fade[yc-1][xc+1])
 					ang = 3;
 				
-				Graphics2D g3d = (Graphics2D)mapback.getGraphics();
 				g3d.translate(destx+24, desty+24);
 				g3d.rotate(ang*(PI/2));
 				g3d.drawImage(waterfade, -24, -24, 24, 24, 0, 0, 48, 48, this);
@@ -636,7 +756,6 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 			if (!fade[yc][xc-1])
 				ang = 3;
 			
-			Graphics2D g3d = (Graphics2D)mapback.getGraphics();
 			g3d.translate(destx+24, desty+24);
 			g3d.rotate(ang*(PI/2));
 			g3d.drawImage(waterfade, -24, -24, 24, 24, 48, 0, 96, 48, this);
@@ -653,7 +772,6 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 				corner = 4;
 			
 			if (corner > 0) { //inside corner
-				Graphics2D g3d = (Graphics2D)mapback.getGraphics();
 				g3d.translate(destx+24, desty+24);
 				g3d.rotate((corner-1)*(PI/2));
 				g3d.drawImage(waterfade, -24, -24, 24, 24, 96, 0, 144, 48, this);
@@ -672,29 +790,6 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 				drawn[yc][xc] = 0;
 			}
 		}
-		
-		int minx = 0, miny = 0, maxx = mapw-1, maxy = maph-1;
-		
-		if (p.x < w/2+47)
-			minx = 0;
-		else
-			minx = ((int)p.x/48+1)-((w/2)/48+1)-1;
-		if (p.y < h/2+47)
-			miny = 0;
-		else
-			miny = ((int)p.y/48+1)-((h/2)/48+1)-1;
-		
-		maxx = minx + (w/48)+1;
-		maxy = miny + (h/48)+1;
-		
-		if (maxx >= mapw)
-			maxx = mapw-1;
-		if (maxy >= maph)
-			maxy = maph-1;
-		if (minx < 0)
-			minx = 0;
-		if (miny < 0)
-			miny = 0;
 		
 		int size = 54; // different layers for walls and objects?
 		double xpo = (w/2-p.x) - p.x/(48/(size-48));
@@ -933,16 +1028,47 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 			}
 		}
 		
-		if (mapChanged) {
+		if (mapImageVariables) {
+			if (mapChanged) {
+				mapfront = null;
+				mapfront = new BufferedImage(mapw*size, maph*size, BufferedImage.TYPE_INT_ARGB_PRE);
+				Graphics2D g3d = (Graphics2D)mapfront.getGraphics();
+				g3d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+				for (int yc = 0; yc <= maph-1; yc++) {
+					for (int xc = 0; xc <= mapw-1; xc++) {
+						destx = xc*size;
+						desty = yc*size;
+					if (map[yc][xc] >= 120 && map[yc][xc] < 180) {
+							g3d.setColor(Color.black);
+							g3d.fillRect(destx, desty, size, size);
+						}
+						else if (map[yc][xc] >= 180) {
+							int sourcex = (map[yc][xc]%10)*48;
+							int sourcey = (map[yc][xc]/10)*48;
+							if (map[yc][xc] == 190) {
+								sourcex = 192;
+								sourcey = 0;
+							}
+							else if (map[yc][xc] == 191) {
+								sourcex = 192;
+								sourcey = 48;
+							}
+							g3d.drawImage(tex, destx, desty, destx+size, desty+size, sourcex, sourcey, sourcex+48, sourcey+48, this);
+						}
+					}
+				}
+			}
+			g2.drawImage(mapfront, (int)Math.round(xpo), (int)Math.round(ypo), this);
+		}
+		else if (!mapImageVariables) {
 			mapfront = null;
-			mapfront = new BufferedImage(mapw*size, maph*size, BufferedImage.TYPE_INT_ARGB_PRE);
-			Graphics2D g3d = (Graphics2D)mapfront.getGraphics();
+			Graphics2D g3d = (Graphics2D)dbImage.getGraphics();
 			g3d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
 			for (int yc = 0; yc <= maph-1; yc++) {
 				for (int xc = 0; xc <= mapw-1; xc++) {
-					destx = xc*size;
-					desty = yc*size;
-/* black walls */	if (map[yc][xc] >= 120 && map[yc][xc] < 180) {
+					destx = (int)Math.round((xc*size) + xpo);
+					desty = (int)Math.round((yc*size) + ypo);
+					if (map[yc][xc] >= 120 && map[yc][xc] < 180) {
 						g3d.setColor(Color.black);
 						g3d.fillRect(destx, desty, size, size);
 					}
@@ -962,7 +1088,6 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 				}
 			}
 		}
-		g2.drawImage(mapfront, (int)Math.round(xpo), (int)Math.round(ypo), this);
 	}
 	
 	public final void drawImage3D(int[] x, int[] y, int xc, int yc, Image a, boolean drawblack, boolean drawwarp) { //3D walls with JAI
@@ -1494,6 +1619,7 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 		dbImage = createImage(w, h);
 		g2 = dbImage.getGraphics();
 		if (menu == 0) { //in-game
+			minMax();
 			drawMap(g2);
 			drawEntity(g2);
 			drawPlayer(g2);
