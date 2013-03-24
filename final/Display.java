@@ -837,7 +837,7 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 								if (destx2-destx3 != 0 && desty2-desty3 != 0) {
 									int[] xco = {destx2, destx2, destx3, destx3};
 									int[] yco = {desty2, desty, desty3, desty3+(48*r)};
-									drawWalls3D(xco, yco, xc, yc, r, texdark, false);
+									drawWalls3D(xco, yco, xc, yc, r, texdark, false, true);
 								}
 							}
 							drawn[yc][xc] += 1;
@@ -880,7 +880,7 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 								if (destx2-destx3 != 0 && desty2-desty3 != 0) {
 									int[] xco = {destx2, destx2, destx3, destx3};
 									int[] yco = {desty2, desty, desty3, desty3+(48*r)};
-									drawWalls3D(xco, yco, xc, yc, r, texdark, false);
+									drawWalls3D(xco, yco, xc, yc, r, texdark, false, true);
 								}
 							}
 							drawn[yc][xc] += 2;
@@ -923,7 +923,7 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 								if (destx2-destx3 != 0 && desty2-desty3 != 0) {
 									int[] xco = {destx, destx2, destx3+(48*r), destx3};
 									int[] yco = {desty2, desty2, desty3, desty3};
-									drawWalls3D(xco, yco, xc, yc, r, texdark, true);
+									drawWalls3D(xco, yco, xc, yc, r, texdark, true, false);
 								}
 							}
 							drawn[yc][xc] += 4;
@@ -966,7 +966,7 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 								if (destx2-destx3 != 0 && desty2-desty3 != 0) {
 									int[] xco = {destx2, destx, destx3, destx3+(48*r)};
 									int[] yco = {desty2, desty2, desty3, desty3};
-									drawWalls3D(xco, yco, xc, yc, r, texdark, true);
+									drawWalls3D(xco, yco, xc, yc, r, texdark, true, true);
 								}
 							}
 							drawn[yc][xc] += 8;
@@ -1130,13 +1130,18 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 		}
 	}
 	
-	public final void drawWalls3D(int[] x, int[] y, int xc, int yc, int num, Image a, boolean horizontal) { //multiple 3D walls with JAI
+	public final void drawWalls3D(int[] x, int[] y, int xc, int yc, int num, Image a, boolean horizontal, boolean backwards) { //multiple 3D walls with JAI
 		BufferedImage temptex = new BufferedImage(48*num, 48, BufferedImage.TYPE_INT_ARGB_PRE);
 		Graphics gtt = temptex.getGraphics();
 		gtt.setColor(Color.black);
 		
 		if (horizontal) {
-			for (int i = xc, j = 0; i < xc+num; i++) {
+			int j;
+			if (backwards)
+				j = 48*(num-1);
+			else
+				j = 0;
+			for (int i = xc; i < xc+num; i++) {
 				if (map[yc][i] == -1)
 					gtt.fillRect(j, 0, 48, 48);
 				else {
@@ -1153,11 +1158,19 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 					
 					gtt.drawImage(a, j, 0, 48+j, 48, sourcex, sourcey, sourcex+48, sourcey+48, this);
 				}
-				j += 48;
+				if (backwards)
+					j -= 48;
+				else
+					j += 48;
 			}
 		}
 		else {
-			for (int i = yc, j = 0; i < yc+num; i++) {
+			int j;
+			if (backwards)
+				j = 48*(num-1);
+			else
+				j = 0;
+			for (int i = yc; i < yc+num; i++) {
 				if (map[i][xc] == -1)
 					gtt.fillRect(j, 0, 48, 48);
 				else {
@@ -1174,7 +1187,10 @@ public class Display extends Applet implements MouseListener, MouseMotionListene
 					
 					gtt.drawImage(a, j, 0, 48+j, 48, sourcex, sourcey, sourcex+48, sourcey+48, this);
 				}
-				j += 48;
+				if (backwards)
+					j -= 48;
+				else
+					j += 48;
 			}
 		}
 		
